@@ -60,6 +60,9 @@ func (h *EducationHandler) GetEducationBySlug(c *fiber.Ctx) error {
 		})
 	}
 
+	// DEBUG: Print the education ID
+	println("Education ID:", education.ID.String())
+
 	//Get modules for this education element
 	var modules []models.Module
 	moduleQuery := `
@@ -70,7 +73,15 @@ func (h *EducationHandler) GetEducationBySlug(c *fiber.Ctx) error {
 	ORDER BY display_order ASC
 	`
 
-	h.db.DB.Select(&modules, moduleQuery, education.ID)
+	err = h.db.DB.Select(&modules, moduleQuery, education.ID)
+	if err != nil {
+		// DEBUG: Print the error
+		println("Module query error:", err.Error())
+		modules = []models.Module{}
+	} else {
+		// DEBUG: Print module count
+		println("Found modules:", len(modules))
+	}
 
 	return c.JSON(fiber.Map{
 		"success": true,

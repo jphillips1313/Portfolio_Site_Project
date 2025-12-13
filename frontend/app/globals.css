@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background: linear-gradient(to bottom, #0d0608 0%, #1a0a0f 25%, #250d15 50%, #3a1520 75%, #4a1a28 100%);
+    background-attachment: fixed;
+    color: #f5e8ed;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+}

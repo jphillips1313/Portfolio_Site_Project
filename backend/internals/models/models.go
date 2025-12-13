@@ -1,10 +1,41 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type JSONB map[string]interface{}
+
+// Scan implements sql.Scanner
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("failed to unmarshal JSONB value")
+	}
+
+	result := make(map[string]interface{})
+	err := json.Unmarshal(bytes, &result)
+	*j = result
+	return err
+}
+
+// Value implements driver.Valuer
+func (j JSONB) Value() (driver.Value, error) {
+	if j == nil {
+		return nil, nil
+	}
+	return json.Marshal(j)
+}
 
 // Education represents a degree/qualification
 type Education struct {
@@ -24,18 +55,18 @@ type Education struct {
 
 // Module represents a course within a degree
 type Module struct {
-	ID              uuid.UUID              `db:"id" json:"id"`
-	EducationID     uuid.UUID              `db:"education_id" json:"education_id"`
-	Name            string                 `db:"name" json:"name"`
-	Code            *string                `db:"code" json:"code"`
-	Grade           *string                `db:"grade" json:"grade"`
-	Credits         *int                   `db:"credits" json:"credits"`
-	Semester        *string                `db:"semester" json:"semester"`
-	Description     *string                `db:"description" json:"description"`
-	DetailedContent map[string]interface{} `db:"detailed_content" json:"detailed_content"`
-	DisplayOrder    int                    `db:"display_order" json:"display_order"`
-	CreatedAt       time.Time              `db:"created_at" json:"created_at"`
-	UpdatedAt       time.Time              `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID `db:"id" json:"id"`
+	EducationID     uuid.UUID `db:"education_id" json:"education_id"`
+	Name            string    `db:"name" json:"name"`
+	Code            *string   `db:"code" json:"code"`
+	Grade           *string   `db:"grade" json:"grade"`
+	Credits         *int      `db:"credits" json:"credits"`
+	Semester        *string   `db:"semester" json:"semester"`
+	Description     *string   `db:"description" json:"description"`
+	DetailedContent JSONB     `db:"detailed_content" json:"detailed_content,omitempty"`
+	DisplayOrder    int       `db:"display_order" json:"display_order"`
+	CreatedAt       time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time `db:"updated_at" json:"updated_at"`
 }
 
 // Skill represents a technical skill
