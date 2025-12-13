@@ -1,40 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface Module {
-  id: string;
-  name: string;
-  code: string;
-  grade: string;
-  credits: number;
-  semester: number;
-  description: string;
-  detailed_content: {
-    academic_year: string;
-    year_of_study: number;
-  };
-}
+import { EducationCardSkeleton } from "./Skeletons";
 
 interface Education {
   id: string;
   degree: string;
   institution: string;
-  field_of_study: string;
   start_date: string;
   end_date: string | null;
   grade: string;
   description: string;
   slug: string;
+  status: string;
+  display_order: number;
+}
+
+interface Module {
+  id: string;
+  name: string;
+  code: string;
+  credits: number;
+  grade: string;
+  academic_year: string;
+  year_of_study: number;
 }
 
 export default function EducationSection() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [educationData, setEducationData] = useState<Education[]>([]);
-  const [modules, setModules] = useState<{ [key: string]: Module[] }>({});
+  const [modules, setModules] = useState<Record<string, Module[]>>({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingModules, setLoadingModules] = useState<Record<string, boolean>>(
+    {}
+  );
 
-  // Fetch education data on mount
   useEffect(() => {
     fetch("http://localhost:8000/api/v1/education")
       .then((res) => res.json())
@@ -43,124 +43,127 @@ export default function EducationSection() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to fetch education:", err);
+        console.error("Error fetching education:", err);
         setLoading(false);
       });
   }, []);
 
-  const handleToggle = async (id: string, slug: string) => {
+  const handleToggle = (id: string, slug: string) => {
     if (expandedId === id) {
       setExpandedId(null);
     } else {
       setExpandedId(id);
-
-      // Fetch modules if we don't have them yet
       if (!modules[id]) {
-        try {
-          const response = await fetch(
-            `http://localhost:8000/api/v1/education/${slug}`
-          );
-          const data = await response.json();
-          setModules({ ...modules, [id]: data.data.modules || [] });
-        } catch (err) {
-          console.error("Failed to fetch modules:", err);
-        }
+        setLoadingModules((prev) => ({ ...prev, [id]: true }));
+        fetch(`http://localhost:8000/api/v1/education/${slug}`)
+          .then((res) => res.json())
+          .then((data) => {
+            setModules((prev) => ({ ...prev, [id]: data.data.modules || [] }));
+            setLoadingModules((prev) => ({ ...prev, [id]: false }));
+          })
+          .catch((err) => {
+            console.error("Error fetching modules:", err);
+            setLoadingModules((prev) => ({ ...prev, [id]: false }));
+          });
       }
     }
   };
 
-  if (loading) {
-    return (
-      <section id="education" className="py-24">
-        <div className="max-w-7xl mx-auto px-8">
-          <p className="text-text-secondary">Loading education...</p>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section id="education" className="py-24">
-      <div className="max-w-7xl mx-auto px-8">
-        {/* Section Header */}
-        <div className="mb-12">
-          <p className="text-text-muted text-xs uppercase tracking-wider mb-2">
-            Academic Background
-          </p>
-          <h2 className="text-5xl font-heading font-semibold">Education</h2>
-        </div>
+    <section id="education" className="py-20 px-6">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-3xl font-bold mb-8 text-text-primary">Education</h2>
 
-        {/* Education List */}
-        <div className="flex flex-col gap-[1px] bg-border-visible border border-border-visible">
-          {educationData.map((edu) => (
-            <div key={edu.id} className="bg-bg-card transition-colors">
-              {/* Clickable Header */}
-              <div
-                className="p-8 cursor-pointer hover:bg-bg-secondary"
-                onClick={() => handleToggle(edu.id, edu.slug)}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-heading font-semibold mb-2">
-                      {edu.degree}
-                    </h3>
-                    <p className="text-text-secondary text-sm mb-1">
-                      {edu.institution} •{" "}
-                      {new Date(edu.start_date).getFullYear()} -{" "}
-                      {edu.end_date
-                        ? new Date(edu.end_date).getFullYear()
-                        : "Present"}
-                    </p>
-                    <p className="text-text-secondary text-sm">
-                      {edu.description}
-                    </p>
-                  </div>
-
-                  <div className="text-right ml-8">
-                    <div className="text-2xl font-heading font-semibold mb-1">
-                      {edu.grade}
+        <div className="space-y-4">
+          {loading ? (
+            // Show 2 skeleton cards while loading
+            <>
+              <EducationCardSkeleton />
+              <EducationCardSkeleton />
+            </>
+          ) : (
+            educationData.map((edu) => (
+              <div key={edu.id}>
+                {/* Clickable header */}
+                <div
+                  onClick={() => handleToggle(edu.id, edu.slug)}
+                  className="bg-bg-card border border-border-subtle rounded-lg p-6 cursor-pointer hover:border-accent-red transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-text-primary mb-2">
+                        {edu.degree}
+                      </h3>
+                      <p className="text-text-secondary mb-1">
+                        {edu.institution}
+                      </p>
+                      <p className="text-text-muted text-sm">
+                        {new Date(edu.start_date).getFullYear()} -{" "}
+                        {edu.end_date
+                          ? new Date(edu.end_date).getFullYear()
+                          : "Present"}
+                      </p>
                     </div>
-                    <p className="text-text-secondary text-sm">
-                      {modules[edu.id]?.length || "..."} modules
-                    </p>
+                    <div className="flex items-center gap-3">
+                      {edu.grade && (
+                        <span className="px-3 py-1 bg-accent-red/10 text-accent-red rounded-full text-sm font-medium">
+                          {edu.grade}
+                        </span>
+                      )}
+                      <span className="text-text-muted">
+                        {expandedId === edu.id ? "−" : "+"}
+                      </span>
+                    </div>
                   </div>
+                  <p className="text-text-secondary mt-4">{edu.description}</p>
                 </div>
-              </div>
 
-              {/* Expanded Content - Show Modules (Outside clickable area) */}
-              {expandedId === edu.id && modules[edu.id] && (
-                <div className="px-8 pb-8">
-                  <div className="pt-6 border-t border-border-subtle">
-                    <div className="grid grid-cols-2 gap-4">
-                      {modules[edu.id].map((module) => (
-                        <div
-                          key={module.id}
-                          className="border border-border-subtle p-4"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-heading font-medium text-text-primary">
+                {/* Expanded modules section */}
+                {expandedId === edu.id && (
+                  <div className="mt-4 pl-6">
+                    {loadingModules[edu.id] ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Show 6 skeleton module cards while loading */}
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-bg-secondary/50 border border-border-subtle rounded p-4"
+                          >
+                            <div className="h-4 w-3/4 bg-bg-card/50 rounded mb-2 animate-pulse" />
+                            <div className="h-3 w-1/2 bg-bg-card/50 rounded mb-2 animate-pulse" />
+                            <div className="h-3 w-1/3 bg-bg-card/50 rounded animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : modules[edu.id] && modules[edu.id].length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {modules[edu.id].map((module) => (
+                          <div
+                            key={module.id}
+                            className="bg-bg-secondary/50 border border-border-subtle rounded p-4"
+                          >
+                            <h4 className="font-medium text-text-primary mb-1">
                               {module.name}
                             </h4>
-                            <span className="text-accent-red text-sm font-semibold">
-                              {module.grade}
-                            </span>
-                          </div>
-                          <p className="text-text-muted text-xs mb-1">
-                            {module.code} • {module.credits} credits
-                          </p>
-                          {module.detailed_content?.academic_year && (
-                            <p className="text-text-muted text-xs">
-                              {module.detailed_content.academic_year}
+                            <p className="text-sm text-text-muted mb-1">
+                              {module.code}
                             </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                            <div className="flex items-center gap-4 text-sm text-text-secondary">
+                              <span>Grade: {module.grade}</span>
+                              <span>{module.credits} credits</span>
+                              <span>Year {module.year_of_study}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-text-muted">No modules found</p>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>

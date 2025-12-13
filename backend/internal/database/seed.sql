@@ -906,10 +906,10 @@ VALUES
     (
         'Go',
         'Backend',
-        NULL,
-        NULL,
+        75,
+        1,
         'active',
-        NULL,
+        2024 / 12 / 01,
         'code'
     ),
     (

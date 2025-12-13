@@ -36,7 +36,40 @@ export default function SkillsSection() {
     return (
       <section id="skills" className="py-24">
         <div className="max-w-7xl mx-auto px-8">
-          <p className="text-text-secondary">Loading skills...</p>
+          {/* Section Header Skeleton */}
+          <div className="mb-12">
+            <div className="h-3 w-32 bg-bg-secondary/50 rounded mb-2 animate-pulse" />
+            <div className="h-12 w-48 bg-bg-secondary/50 rounded animate-pulse" />
+          </div>
+
+          {/* Skills Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className="bg-bg-card border border-border-visible p-6"
+              >
+                {/* Category Header Skeleton */}
+                <div className="h-6 w-24 bg-bg-secondary/50 rounded mb-6 animate-pulse" />
+
+                {/* Skills List Skeleton */}
+                <div className="space-y-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i}>
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="h-4 w-20 bg-bg-secondary/50 rounded animate-pulse" />
+                        <div className="h-3 w-8 bg-bg-secondary/50 rounded animate-pulse" />
+                      </div>
+                      {/* Progress Bar Skeleton */}
+                      <div className="w-full h-0.5 bg-border-visible overflow-hidden">
+                        <div className="h-full bg-bg-secondary/50 w-3/4 animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -52,6 +85,18 @@ export default function SkillsSection() {
     return acc;
   }, {} as SkillsByCategory);
 
+  // Define category order
+  const categoryOrder = ["Backend", "Frontend", "Languages", "Tools"];
+  const sortedCategories = Object.entries(skillsByCategory).sort(([a], [b]) => {
+    const indexA = categoryOrder.indexOf(a);
+    const indexB = categoryOrder.indexOf(b);
+    // If category not in order list, put it at the end
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
   return (
     <section id="skills" className="py-24">
       <div className="max-w-7xl mx-auto px-8">
@@ -65,46 +110,47 @@ export default function SkillsSection() {
 
         {/* Skills Grid by Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {Object.entries(skillsByCategory).map(
-            ([category, categorySkills]) => (
-              <div
-                key={category}
-                className="bg-bg-card border border-border-visible p-6"
-              >
-                {/* Category Header */}
-                <h3 className="text-xl font-heading font-semibold mb-6 text-text-primary">
-                  {category}
-                </h3>
+          {sortedCategories.map(([category, categorySkills]) => (
+            <div
+              key={category}
+              className="bg-bg-card border border-border-visible p-6"
+            >
+              {/* Category Header */}
+              <h3 className="text-xl font-heading font-semibold mb-6 text-text-primary">
+                {category}
+              </h3>
 
-                {/* Skills List */}
-                <div className="space-y-4">
-                  {categorySkills.map((skill) => (
-                    <div key={skill.id}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-text-secondary text-sm">
-                          {skill.name}
-                        </span>
-                        {skill.proficiency_level && (
-                          <span className="text-text-muted text-xs">
-                            {skill.proficiency_level}%
-                          </span>
-                        )}
-                      </div>
-                      {/* Progress Bar */}
+              {/* Skills List */}
+              <div className="space-y-4">
+                {categorySkills.map((skill) => (
+                  <div key={skill.id}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-text-secondary text-sm">
+                        {skill.name}
+                      </span>
                       {skill.proficiency_level && (
-                        <div className="w-full h-0.5 bg-border-visible overflow-hidden">
-                          <div
-                            className="h-full bg-accent-red transition-all duration-300"
-                            style={{ width: `${skill.proficiency_level}%` }}
-                          />
-                        </div>
+                        <span className="text-text-muted text-xs">
+                          {skill.proficiency_level}%
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
+                    {/* Progress Bar */}
+                    {skill.proficiency_level && (
+                      <div className="w-full h-1 bg-bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-300"
+                          style={{
+                            width: `${skill.proficiency_level}%`,
+                            backgroundColor: "#f5e8ed",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       </div>
     </section>

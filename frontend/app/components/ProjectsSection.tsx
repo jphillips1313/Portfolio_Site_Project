@@ -20,7 +20,7 @@ interface Project {
   live_url: string | null;
   featured: boolean;
   difficulty_level: string;
-  skills: Skill[]; // Added this!
+  skills: Skill[];
 }
 
 export default function ProjectsSection() {
@@ -30,8 +30,13 @@ export default function ProjectsSection() {
   useEffect(() => {
     fetch("http://localhost:8000/api/v1/projects")
       .then((res) => res.json())
-      .then((data) => {
-        setProjects(data.data);
+      .then((response) => {
+        // Transform the data to flatten project and skills
+        const transformedProjects = response.data.map((item: any) => ({
+          ...item.project,
+          skills: item.skills,
+        }));
+        setProjects(transformedProjects);
         setLoading(false);
       })
       .catch((err) => {
@@ -53,7 +58,6 @@ export default function ProjectsSection() {
   return (
     <section id="work" className="py-24">
       <div className="max-w-7xl mx-auto px-8">
-        {/* Section Header */}
         <div className="mb-12">
           <p className="text-text-muted text-xs uppercase tracking-wider mb-2">
             Selected Work
@@ -61,34 +65,29 @@ export default function ProjectsSection() {
           <h2 className="text-5xl font-heading font-semibold">Projects</h2>
         </div>
 
-        {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <div
               key={project.id}
               className="bg-bg-card border border-border-visible p-6 hover:border-accent-red transition-colors group cursor-pointer"
             >
-              {/* Status Badge */}
               <div className="inline-block px-3 py-1 text-xs border border-border-visible text-text-secondary mb-4 uppercase tracking-wide">
                 {project.status}
               </div>
 
-              {/* Project Name */}
               <h3 className="text-2xl font-heading font-semibold mb-3 group-hover:text-accent-red transition-colors">
                 {project.name}
               </h3>
 
-              {/* Description */}
               <p className="text-text-secondary text-sm leading-relaxed mb-6">
                 {project.short_description}
               </p>
 
-              {/* Tech Stack */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {project.skills &&
-                  project.skills.map((skill) => (
+                  project.skills.map((skill, index) => (
                     <span
-                      key={skill.id}
+                      key={skill?.id || `skill-${project.id}-${index}`}
                       className="text-xs text-text-muted border border-border-subtle px-2 py-1"
                     >
                       {skill.name}
@@ -96,7 +95,6 @@ export default function ProjectsSection() {
                   ))}
               </div>
 
-              {/* Links */}
               <div className="flex gap-4 text-sm">
                 {project.github_url && (
                   <a
