@@ -21,3 +21,13 @@
     background-position: 200% 0;
   }
 }
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+html {
+  scroll-padding-top: 80px;
+}

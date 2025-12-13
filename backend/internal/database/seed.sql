@@ -161,11 +161,11 @@ INSERT INTO
     )
 SELECT
     e.id,
-    'DevOps', -- e.g., 'Advanced Web Development'
-    'CMT654', -- e.g., 'CS-501' (or NULL)
-    'N/a', -- e.g., 'A+', '85%', 'Pass'
-    15, -- Credit hours
-    2, -- Semester number
+    'DevOps',
+    'CMT654',
+    'N/a',
+    15,
+    2,
     'Not delivered yet',
     jsonb_build_object (
         'topics',
@@ -192,11 +192,11 @@ INSERT INTO
     )
 SELECT
     e.id,
-    'Delivering User Experience', -- e.g., 'Advanced Web Development'
-    'CMT656', -- e.g., 'CS-501' (or NULL)
-    'N/a', -- e.g., 'A+', '85%', 'Pass'
-    15, -- Credit hours
-    2, -- Semester number
+    'Delivering User Experience',
+    'CMT656',
+    'N/a',
+    15,
+    2,
     'Not delivered yet',
     jsonb_build_object (
         'topics',
@@ -223,11 +223,11 @@ INSERT INTO
     )
 SELECT
     e.id,
-    'Manipulating and exploiting data', -- e.g., 'Advanced Web Development'
-    'CMT655', -- e.g., 'CS-501' (or NULL)
-    'N/a', -- e.g., 'A+', '85%', 'Pass'
-    15, -- Credit hours
-    2, -- Semester number
+    'Manipulating and exploiting data',
+    'CMT655',
+    'N/a',
+    15,
+    2,
     'Not delivered yet',
     jsonb_build_object (
         'topics',
