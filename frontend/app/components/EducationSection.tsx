@@ -197,6 +197,18 @@ export default function EducationSection() {
             )}
           </div>
         )}
+
+        {/* CTA to full CV page */}
+        {!error && (
+          <div className="mt-8 text-center">
+            <a
+              href="/cv"
+              className="inline-block px-8 py-3 bg-transparent border border-accent-red text-accent-red hover:bg-accent-red hover:text-text-primary transition-colors font-medium"
+            >
+              View Comprehensive CV →
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );

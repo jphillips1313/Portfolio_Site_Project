@@ -7,8 +7,8 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
+    { href: "/cv", label: "CV" },
     { href: "#work", label: "Work" },
-    { href: "#education", label: "Education" },
     { href: "#skills", label: "Skills" },
     { href: "#contact", label: "Contact" },
   ];
