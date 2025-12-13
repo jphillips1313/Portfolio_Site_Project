@@ -18,19 +18,41 @@ interface SkillsByCategory {
 export default function SkillsSection() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/skills")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/v1/skills`)
       .then((res) => res.json())
       .then((data) => {
         setSkills(data.data);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Failed to fetch skills:", err);
+        setError("Failed to load skills. Please try again.");
         setLoading(false);
       });
   }, []);
+
+  const retryFetch = () => {
+    setLoading(true);
+    setError(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/v1/skills`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSkills(data.data);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch skills:", err);
+        setError("Failed to load skills. Please try again.");
+        setLoading(false);
+      });
+  };
 
   if (loading) {
     return (
@@ -69,6 +91,30 @@ export default function SkillsSection() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="skills" className="py-24">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="mb-12">
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-2">
+              Technical Expertise
+            </p>
+            <h2 className="text-5xl font-heading font-semibold">Skills</h2>
+          </div>
+          <div className="bg-bg-card border border-border-visible p-8 text-center">
+            <p className="text-text-secondary mb-4">{error}</p>
+            <button
+              onClick={retryFetch}
+              className="px-6 py-2 bg-accent-red text-white hover:bg-accent-red-hover transition-colors"
+            >
+              Retry
+            </button>
           </div>
         </div>
       </section>

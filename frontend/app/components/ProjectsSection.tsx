@@ -26,9 +26,11 @@ interface Project {
 export default function ProjectsSection() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/projects")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/v1/projects`)
       .then((res) => res.json())
       .then((response) => {
         // Transform the data to flatten project and skills
@@ -37,19 +39,96 @@ export default function ProjectsSection() {
           skills: item.skills,
         }));
         setProjects(transformedProjects);
+        setError(null);
         setLoading(false);
       })
       .catch((err) => {
         console.error("Failed to fetch projects:", err);
+        setError("Failed to load projects. Please try again.");
         setLoading(false);
       });
   }, []);
+
+  const retryFetch = () => {
+    setLoading(true);
+    setError(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/v1/projects`)
+      .then((res) => res.json())
+      .then((response) => {
+        const transformedProjects = response.data.map((item: any) => ({
+          ...item.project,
+          skills: item.skills,
+        }));
+        setProjects(transformedProjects);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch projects:", err);
+        setError("Failed to load projects. Please try again.");
+        setLoading(false);
+      });
+  };
 
   if (loading) {
     return (
       <section id="work" className="py-24">
         <div className="max-w-7xl mx-auto px-8">
-          <p className="text-text-secondary">Loading projects...</p>
+          <div className="mb-12">
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-2">
+              Selected Work
+            </p>
+            <h2 className="text-5xl font-heading font-semibold">Projects</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="bg-bg-card border border-border-visible p-6"
+              >
+                <div className="h-6 w-20 bg-bg-secondary/50 rounded mb-4 animate-pulse" />
+                <div className="h-8 w-3/4 bg-bg-secondary/50 rounded mb-3 animate-pulse" />
+                <div className="space-y-2 mb-6">
+                  <div className="h-4 w-full bg-bg-secondary/50 rounded animate-pulse" />
+                  <div className="h-4 w-5/6 bg-bg-secondary/50 rounded animate-pulse" />
+                </div>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <div className="h-6 w-16 bg-bg-secondary/50 rounded animate-pulse" />
+                  <div className="h-6 w-20 bg-bg-secondary/50 rounded animate-pulse" />
+                  <div className="h-6 w-14 bg-bg-secondary/50 rounded animate-pulse" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="h-4 w-20 bg-bg-secondary/50 rounded animate-pulse" />
+                  <div className="h-4 w-24 bg-bg-secondary/50 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="work" className="py-24">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="mb-12">
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-2">
+              Selected Work
+            </p>
+            <h2 className="text-5xl font-heading font-semibold">Projects</h2>
+          </div>
+          <div className="bg-bg-card border border-border-visible p-8 text-center">
+            <p className="text-text-secondary mb-4">{error}</p>
+            <button
+              onClick={retryFetch}
+              className="px-6 py-2 bg-accent-red text-white hover:bg-accent-red-hover transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </section>
     );
