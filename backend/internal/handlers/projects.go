@@ -16,7 +16,7 @@ func NewProjectsHandler(db *database.Database) *ProjectsHandler {
 
 // Return all projects
 func (h *ProjectsHandler) GetAllProjects(c *fiber.Ctx) error {
-	featuredOnly := c.Query("featured") == "true"
+	featuredOnly := c.Query("featured")
 
 	var projects []models.Project
 
@@ -29,7 +29,7 @@ func (h *ProjectsHandler) GetAllProjects(c *fiber.Ctx) error {
 	WHERE status = 'active'
 	`
 
-	if featuredOnly {
+	if featuredOnly == "true" {
 		query += "AND featured = true"
 	}
 
@@ -44,10 +44,28 @@ func (h *ProjectsHandler) GetAllProjects(c *fiber.Ctx) error {
 		})
 	}
 
+	projectsWithSkills := make([]models.ProjectWithSkills, len(projects))
+	for i := range projects {
+		var skills []models.Skill
+		skillQuery := `
+			SELECT s.id, s.name, s.category, s.icon
+			FROM skills s
+			INNER JOIN project_skills ps ON s.id = ps.skill_id
+			WHERE ps.project_id = $1
+			ORDER BY ps.is_primary DESC, s.name ASC
+		`
+		h.db.DB.Select(&skills, skillQuery, projects[i].ID)
+
+		projectsWithSkills[i] = models.ProjectWithSkills{
+			Project: projects[i],
+			Skills:  skills,
+		}
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
-		"data":    projects,
-		"count":   len(projects),
+		"data":    projectsWithSkills,
+		"count":   len(projectsWithSkills),
 	})
 }
 

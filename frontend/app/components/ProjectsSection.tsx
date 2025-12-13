@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+interface Skill {
+  id: string;
+  name: string;
+  category: string;
+  icon: string | null;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -13,6 +20,7 @@ interface Project {
   live_url: string | null;
   featured: boolean;
   difficulty_level: string;
+  skills: Skill[]; // Added this!
 }
 
 export default function ProjectsSection() {
@@ -75,11 +83,17 @@ export default function ProjectsSection() {
                 {project.short_description}
               </p>
 
-              {/* Tech Stack - We'll add this when we connect project_skills */}
+              {/* Tech Stack */}
               <div className="flex flex-wrap gap-2 mb-6">
-                <span className="text-xs text-text-muted border border-border-subtle px-2 py-1">
-                  {project.difficulty_level}
-                </span>
+                {project.skills &&
+                  project.skills.map((skill) => (
+                    <span
+                      key={skill.id}
+                      className="text-xs text-text-muted border border-border-subtle px-2 py-1"
+                    >
+                      {skill.name}
+                    </span>
+                  ))}
               </div>
 
               {/* Links */}

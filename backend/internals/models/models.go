@@ -108,6 +108,11 @@ type Project struct {
 	UpdatedAt        time.Time  `db:"updated_at" json:"updated_at"`
 }
 
+type ProjectWithSkills struct {
+	Project Project `json:"project"`
+	Skills  []Skill `json:"skills"`
+}
+
 // BlogPost represents a blog article
 type BlogPost struct {
 	ID                 uuid.UUID  `db:"id" json:"id"`
