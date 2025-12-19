@@ -37,6 +37,33 @@ func (j JSONB) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
 
+type User struct {
+	ID           uuid.UUID  `json:"id" db:"id"`
+	Username     string     `json:"username" db:"username"`
+	Email        string     `json:"email" db:"email"`
+	PasswordHash string     `json:"-" db:"password_hash"` // Never send to client
+	IsAdmin      bool       `json:"is_admin" db:"is_admin"`
+	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
+	LastLogin    *time.Time `json:"last_login,omitempty" db:"last_login"`
+}
+
+// LoginRequest represents login credentials
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+	User  struct {
+		ID       uuid.UUID `json:"id"`
+		Username string    `json:"username"`
+		Email    string    `json:"email"`
+		IsAdmin  bool      `json:"is_admin"`
+	} `json:"user"`
+}
+
 // Education represents a degree/qualification
 type Education struct {
 	ID           uuid.UUID  `db:"id" json:"id"`

@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"database/sql"
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jphillips1313/portfolio-backend/internal/database"
 	"github.com/jphillips1313/portfolio-backend/internals/models"
 )
@@ -135,4 +139,179 @@ func (h *EducationHandler) CreateEducation(c *fiber.Ctx) error {
 		"success": true,
 		"data":    education,
 	})
+}
+
+// Updates an education record
+func (h *EducationHandler) Update(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	//parse UUID
+	educationID, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Inavlid request body",
+		})
+	}
+
+	var updates map[string]interface{}
+	if err := c.BodyParser(&updates); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	query := "UPDATE education SET updated_at = CURRENT_TIMESTAMP"
+	args := []interface{}{}
+	argsPosition := 1
+
+	allowedFields := map[string]bool{
+		"degree": true, "institution": true, "field_of_study": true,
+		"start_date": true, "end_date": true, "grade": true,
+		"description": true, "display_order": false,
+	}
+
+	for field, value := range updates {
+		if allowedFields[field] {
+			query += fmt.Sprintf(", %s = $%d", field, argsPosition)
+			args = append(args, value)
+			argsPosition++
+		}
+	}
+
+	query += fmt.Sprintf("WHERE id = $%d RETURNING *", argsPosition)
+	args = append(args, educationID)
+
+	//execute update
+	var education models.Education
+	err = h.db.DB.Get(&education, query, args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "education record not found",
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update education",
+		})
+	}
+
+	return c.JSON(education)
+}
+
+// Delete an education record
+func (h *EducationHandler) Delete(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	educationID, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid education ID format",
+		})
+	}
+
+	result, err := h.db.DB.Exec("DELETE FROM education WHERE id = $1", educationID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete education record",
+		})
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Record not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Education deleted successfully",
+	})
+}
+
+// Updates a module record
+func (h *EducationHandler) UpdateModule(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	moduleID, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid Module Id",
+		})
+	}
+
+	var updates map[string]interface{}
+	if err := c.BodyParser(&updates); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	//Dynamic UPDATE query
+	query := "UPDATE modules SET updated_at = CURRENT_TIMESTAMP"
+	args := []interface{}{}
+	argsPosition := 1
+
+	allowedFields := map[string]bool{
+		"name": true, "code": true, "grade": true, "credits": true,
+		"semester": true, "description": true, "detailed_content": true,
+		"display_order": false,
+	}
+
+	for field, value := range updates {
+		if allowedFields[field] {
+			query += fmt.Sprintf(", %s, $%d", field, argsPosition)
+			args = append(args, value)
+			argsPosition++
+		}
+	}
+
+	query += fmt.Sprintf("WHERE id = $%d RETURNING *", argsPosition)
+	args = append(args, moduleID)
+
+	var module models.Module
+	err = h.db.DB.Get(&module, query, args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Module not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update module",
+		})
+	}
+
+	return c.JSON(module)
+}
+
+// Deletes a module
+func (h *EducationHandler) DeleteModule(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	moduleID, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid Module ID format",
+		})
+	}
+
+	result, err := h.db.DB.Exec("DELET FROM modules WHERE id = $1", moduleID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete module",
+		})
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Module not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Module deleted successfully",
+	})
+
 }
