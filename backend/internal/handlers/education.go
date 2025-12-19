@@ -178,7 +178,7 @@ func (h *EducationHandler) Update(c *fiber.Ctx) error {
 		}
 	}
 
-	query += fmt.Sprintf("WHERE id = $%d RETURNING *", argsPosition)
+	query += fmt.Sprintf(" WHERE id = $%d RETURNING *", argsPosition)
 	args = append(args, educationID)
 
 	//execute update
@@ -266,7 +266,7 @@ func (h *EducationHandler) UpdateModule(c *fiber.Ctx) error {
 		}
 	}
 
-	query += fmt.Sprintf("WHERE id = $%d RETURNING *", argsPosition)
+	query += fmt.Sprintf(" WHERE id = $%d RETURNING *", argsPosition)
 	args = append(args, moduleID)
 
 	var module models.Module

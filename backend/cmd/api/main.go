@@ -19,7 +19,7 @@ import (
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println(" No .env file found, using system environment")
+		log.Println("No .env file found, using system environment")
 	}
 
 	// Connect to database
@@ -43,9 +43,10 @@ func main() {
 		TimeZone:   "Local",
 	}))
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: os.Getenv("FRONTEND_URL"),
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+		AllowOrigins:     os.Getenv("FRONTEND_URL"),
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		AllowCredentials: true,
 	}))
 
 	// Health check endpoint
@@ -75,47 +76,86 @@ func main() {
 		})
 	})
 
-	// API routes will go here
-	api := app.Group("/api/v1")
-
-	//initialise handlers
+	// Initialize handlers
+	authHandler := handlers.NewAuthHandler(db.DB)
 	educationHandler := handlers.NewEducationHandler(db)
 	projectsHandler := handlers.NewProjectsHandler(db)
 	skillsHandler := handlers.NewSkillsHandler(db)
 	blogHandler := handlers.NewBlogHandler(db)
 
-	//Education routes
+	// API routes
+	api := app.Group("/api/v1")
+
+	// Public routes - Authentication
+	auth := api.Group("/auth")
+	auth.Post("/login", authHandler.Login)
+	auth.Post("/logout", authHandler.Logout)
+
+	// Public routes - Read-only data
 	api.Get("/education", educationHandler.GetAllEducation)
 	api.Get("/education/:slug", educationHandler.GetEducationBySlug)
-	api.Get("/education", educationHandler.CreateEducation) //TODO: Add Auth
-
-	//Project routes
 	api.Get("/projects", projectsHandler.GetAllProjects)
-	api.Get("/projects:/slug", projectsHandler.GetProjectBySlug)
-	api.Get("/projects", projectsHandler.CreateProject) //TODO: Add Auth
-
-	//Skills routes
+	api.Get("/projects/:slug", projectsHandler.GetProjectBySlug)
 	api.Get("/skills", skillsHandler.GetAllSkills)
-
-	//Blog Routes
 	api.Get("/blog", blogHandler.GetAllBlogPosts)
 	api.Get("/blog/:slug", blogHandler.GetBlogPostBySlug)
 
-	//API info route
+	// Protected admin routes - require authentication
+	admin := api.Group("/admin", handlers.VerifyToken)
+
+	// Admin - Education management
+	admin.Patch("/education/:id", educationHandler.Update)
+	admin.Delete("/education/:id", educationHandler.Delete)
+
+	// Admin - Module management
+	admin.Patch("/modules/:id", educationHandler.UpdateModule)
+	admin.Delete("/modules/:id", educationHandler.DeleteModule)
+
+	// Admin - Skills management
+	admin.Patch("/skills/:id", skillsHandler.Update)
+	admin.Delete("/skills/:id", skillsHandler.Delete)
+
+	// Admin - Projects management
+	admin.Patch("/projects/:id", projectsHandler.Update)
+	admin.Delete("/projects/:id", projectsHandler.Delete)
+
+	// Admin - Blog management
+	admin.Post("/blog", blogHandler.CreateBlogPost)
+	admin.Patch("/blog/:id", blogHandler.UpdateBlogPost)
+	admin.Delete("/blog/:id", blogHandler.DeleteBlogPost)
+
+	// API info route
 	api.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "Portfolio API v1",
 			"version": "1.0.0",
-			"endpoints": []string{
-				"GET /health",
-				"GET /health/db",
-				"GET /api/v1/education",
-				"GET /api/v1/education/:slug",
-				"GET /api/v1/projects",
-				"GET /api/v1/projects/:slug",
-				"GET /api/v1/skills",
-				"GET /api/v1/blog",
-				"GET /api/v1/blog/:slug",
+			"endpoints": fiber.Map{
+				"public": []string{
+					"POST /api/v1/auth/login",
+					"POST /api/v1/auth/logout",
+					"GET /health",
+					"GET /health/db",
+					"GET /api/v1/education",
+					"GET /api/v1/education/:slug",
+					"GET /api/v1/projects",
+					"GET /api/v1/projects/:slug",
+					"GET /api/v1/skills",
+					"GET /api/v1/blog",
+					"GET /api/v1/blog/:slug",
+				},
+				"admin": []string{
+					"PATCH /api/v1/admin/education/:id",
+					"DELETE /api/v1/admin/education/:id",
+					"PATCH /api/v1/admin/modules/:id",
+					"DELETE /api/v1/admin/modules/:id",
+					"PATCH /api/v1/admin/skills/:id",
+					"DELETE /api/v1/admin/skills/:id",
+					"PATCH /api/v1/admin/projects/:id",
+					"DELETE /api/v1/admin/projects/:id",
+					"POST /api/v1/admin/blog",
+					"PATCH /api/v1/admin/blog/:id",
+					"DELETE /api/v1/admin/blog/:id",
+				},
 			},
 		})
 	})
@@ -128,6 +168,7 @@ func main() {
 
 	log.Printf("🚀 Server starting on port %s", port)
 	log.Printf("📊 Environment: %s", os.Getenv("ENV"))
+	log.Printf("🔐 Auth endpoints available at /api/v1/auth")
 	log.Fatal(app.Listen(":" + port))
 }
 

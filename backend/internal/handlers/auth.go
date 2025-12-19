@@ -22,7 +22,7 @@ func NewAuthHandler(db *sqlx.DB) *AuthHandler {
 }
 
 // Login authenticates a login and assigns a JWT token
-func (h *AuthHandler) login(c *fiber.Ctx) error {
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var req models.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
