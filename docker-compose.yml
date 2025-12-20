@@ -1,0 +1,142 @@
+version: '3.9'
+
+# Define services (containers)
+services:
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  db:
+    image: postgres:16-alpine
+    container_name: portfolio_db
+    restart: unless-stopped
+
+    # Environment variables
+    environment:
+      POSTGRES_USER: portfolio_user
+      POSTGRES_PASSWORD: portfolio_pass
+      POSTGRES_DB: portfolio_dev
+      # PostgreSQL performance tuning
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+
+    # Port mapping: host:container
+    ports:
+      - "5432:5432"
+
+    # Volume for data persistence
+    # Data survives container restarts/removals
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount init scripts (run on first start)
+      - ./backend/internal/database/migrations:/docker-entrypoint-initdb.d
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio_user -d portfolio_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    # Network
+    networks:
+      - portfolio_network
+
+  # ==========================================
+  # Backend API (Go/Fiber)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: portfolio_backend
+    restart: unless-stopped
+
+    # Wait for database to be healthy before starting
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Environment variables
+    environment:
+      # Database connection
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: portfolio_user
+      DB_PASSWORD: portfolio_pass
+      DB_NAME: portfolio_dev
+      DB_SSLMODE: disable
+
+      # Server
+      PORT: 8000
+      ENV: development
+
+      # CORS
+      FRONTEND_URL: http://localhost:3000
+
+      # Auth
+      JWT_SECRET: ${JWT_SECRET}
+
+    # Port mapping
+    ports:
+      - "8000:8000"
+
+    # Volume mounts for development
+    # Changes to these files reflect immediately (no rebuild)
+    volumes:
+      # Mount source code for hot reload (optional, requires air or similar)
+      # - ./backend:/app
+      # Mount migrations
+      - ./backend/internal/database/migrations:/app/internal/database/migrations
+
+    # Network
+    networks:
+      - portfolio_network
+
+  # ==========================================
+  # Frontend (Next.js)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # Pass build args for Next.js
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    container_name: portfolio_frontend
+    restart: unless-stopped
+
+    # Wait for backend to be ready
+    depends_on:
+      - backend
+
+    # Environment variables (runtime)
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+    # Port mapping
+    ports:
+      - "3000:3000"
+
+    # Network
+    networks:
+      - portfolio_network
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  portfolio_network:
+    driver: bridge
+    # Custom network allows services to communicate by name
+    # backend can reach db at "db:5432"
+    # frontend can reach backend at "backend:8000"
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres_data:
+    # Named volume for database persistence
+    # Data survives `docker-compose down`
+    # Remove with `docker-compose down -v`

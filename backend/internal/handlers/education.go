@@ -130,7 +130,7 @@ func (h *EducationHandler) CreateEducation(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(models.ErrorResponse{
 			Error:   "database_error",
-			Message: "Failed to create eduaction entry",
+			Message: "Failed to create education entry",
 			Code:    500,
 		})
 	}
@@ -296,7 +296,7 @@ func (h *EducationHandler) DeleteModule(c *fiber.Ctx) error {
 		})
 	}
 
-	result, err := h.db.DB.Exec("DELET FROM modules WHERE id = $1", moduleID)
+	result, err := h.db.DB.Exec("DELETE FROM modules WHERE id = $1", moduleID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to delete module",

@@ -91,7 +91,7 @@ func (h *SkillsHandler) Update(c *fiber.Ctx) error {
 	argsPosition := 1
 
 	allowedFields := map[string]bool{
-		"name": true, "category": true, "proficency_level": true,
+		"name": true, "category": true, "proficiency_level": true,
 		"years_experience": true, "status": true, "first_learned_date": true,
 		"last_used_date": true, "description": true, "icon": true,
 		"display_order": false,
