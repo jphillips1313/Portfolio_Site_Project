@@ -82,7 +82,7 @@ func (h *SkillsHandler) Update(c *fiber.Ctx) error {
 	var updates map[string]interface{}
 	if err := c.BodyParser(&updates); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Ibvalid request body",
+			"error": "Invalid request body",
 		})
 	}
 
@@ -94,7 +94,7 @@ func (h *SkillsHandler) Update(c *fiber.Ctx) error {
 		"name": true, "category": true, "proficiency_level": true,
 		"years_experience": true, "status": true, "first_learned_date": true,
 		"last_used_date": true, "description": true, "icon": true,
-		"display_order": false,
+		"display_order": true,
 	}
 
 	for field, value := range updates {

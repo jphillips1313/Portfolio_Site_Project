@@ -97,6 +97,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 func VerifyToken(c *fiber.Ctx) error {
 	authHeader := c.Get("Authorization")
+	println("DEBUG: Auth header received:", authHeader)
 	if authHeader == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "No authorization header",
@@ -107,6 +108,7 @@ func VerifyToken(c *fiber.Ctx) error {
 	if len(authHeader) > 7 && (authHeader[:7] == "Bearer " || authHeader[:7] == "bearer ") {
 		tokenString = authHeader[7:]
 	}
+	println("DEBUG: Token string after extraction:", tokenString[:20], "...")
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -116,6 +118,7 @@ func VerifyToken(c *fiber.Ctx) error {
 	})
 
 	if err != nil || !token.Valid {
+		println("DEBUG: Token parsing failed:", err.Error())
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid or expired token",
 		})

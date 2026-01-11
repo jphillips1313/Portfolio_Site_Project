@@ -8,7 +8,7 @@ interface Skill {
   name: string;
   category: string;
   proficiency_level: number;
-  years_of_experience: number;
+  years_experience: number;
   icon?: string;
 }
 
@@ -196,10 +196,10 @@ export default function SkillsEditor() {
                     min="0"
                     max="50"
                     step="0.5"
-                    value={skill.years_of_experience}
+                    value={skill.years_experience}
                     onChange={(e) =>
                       updateSkill(skill.id, {
-                        years_of_experience: parseFloat(e.target.value),
+                        years_experience: parseFloat(e.target.value),
                       })
                     }
                     disabled={saving === skill.id}
@@ -215,7 +215,7 @@ export default function SkillsEditor() {
       <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
         <div className="flex items-start space-x-3">
           <svg
-            className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"
+            className="w-5 h-5 text-blue-400 shrink-0 mt-0.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
