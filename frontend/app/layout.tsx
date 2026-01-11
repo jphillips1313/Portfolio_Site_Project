@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
-import BackToTop from "./components/BackToTop";
-import Navigation from "./components/Navigation";
+import { AuthProvider } from "./contexts/AuthContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,18 +34,17 @@ export const metadata: Metadata = {
   authors: [{ name: "Jack Phillips" }],
   creator: "Jack Phillips",
 
-  // Open Graph (Facebook, LinkedIn, Discord)
   openGraph: {
     type: "website",
     locale: "en_GB",
-    url: "https://jackphillips.dev", // Update when deployed
+    url: "https://jackphillips.dev",
     title: "Jack Phillips | Software Engineer",
     description:
       "Software Engineer specializing in Go, PostgreSQL, React, and TypeScript. MSc Software Engineering graduate from Cardiff University.",
     siteName: "Jack Phillips Portfolio",
     images: [
       {
-        url: "/og-image.png", // We'll create this later
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Jack Phillips - Software Engineer",
@@ -54,7 +52,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Additional Meta
   robots: {
     index: true,
     follow: true,
@@ -66,11 +63,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-
-  // Verification (add when you have accounts)
-  // verification: {
-  //   google: "your-google-verification-code",
-  // },
 };
 
 export default function RootLayout({
@@ -81,17 +73,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
-        {/* Theme Color for mobile browsers */}
         <meta name="theme-color" content="#1a0a0f" />
         <meta name="color-scheme" content="dark" />
-
-        {/* Favicon */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </head>
       <body className="font-sans antialiased">
-        <Navigation />
-        {children}
-        <BackToTop />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

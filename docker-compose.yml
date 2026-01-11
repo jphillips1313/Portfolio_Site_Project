@@ -26,8 +26,12 @@ services:
     # Data survives container restarts/removals
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Mount init scripts (run on first start)
-      - ./backend/internal/database/migrations:/docker-entrypoint-initdb.d
+      # Mount migration files (run on first start)
+      # Note: Files are run in alphabetical order
+      - ./backend/internal/database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+      - ./backend/internal/database/migrations/002_create_users_table.sql:/docker-entrypoint-initdb.d/002_create_users_table.sql
+      - ./backend/internal/database/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+      - ./backend/internal/database/seed_admin_user.sql:/docker-entrypoint-initdb.d/seed_admin_user.sql
 
     # Health check
     healthcheck:
@@ -110,9 +114,13 @@ services:
       - backend
 
     # Environment variables (runtime)
+    # NEXT_PUBLIC_ vars are for client-side (browser)
+    # They use localhost because browser is outside Docker
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Internal API URL for server-side rendering
+      INTERNAL_API_URL: http://backend:8000
 
     # Port mapping
     ports:

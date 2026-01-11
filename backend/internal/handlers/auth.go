@@ -104,7 +104,7 @@ func VerifyToken(c *fiber.Ctx) error {
 	}
 
 	tokenString := authHeader
-	if len(authHeader) > 7 && authHeader[:7] == "bearer" {
+	if len(authHeader) > 7 && (authHeader[:7] == "Bearer " || authHeader[:7] == "bearer ") {
 		tokenString = authHeader[7:]
 	}
 
@@ -117,7 +117,7 @@ func VerifyToken(c *fiber.Ctx) error {
 
 	if err != nil || !token.Valid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"erorr": "Invalid or expired token",
+			"error": "Invalid or expired token",
 		})
 	}
 
