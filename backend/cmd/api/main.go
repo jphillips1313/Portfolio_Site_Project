@@ -83,6 +83,7 @@ func main() {
 	projectsHandler := handlers.NewProjectsHandler(db)
 	skillsHandler := handlers.NewSkillsHandler(db)
 	blogHandler := handlers.NewBlogHandler(db)
+	contactHandler := handlers.NewContactHandler()
 
 	// API routes
 	api := app.Group("/api/v1")
@@ -106,6 +107,9 @@ func main() {
 	api.Get("/skills", skillsHandler.GetAllSkills)
 	api.Get("/blog", blogHandler.GetAllBlogPosts)
 	api.Get("/blog/:slug", blogHandler.GetBlogPostBySlug)
+
+	// Public routes - Contact form
+	api.Post("/contact", contactHandler.SendContactEmail)
 
 	// Protected admin routes - require authentication
 	admin := api.Group("/admin", handlers.VerifyToken)
@@ -155,6 +159,7 @@ func main() {
 					"GET /api/v1/skills",
 					"GET /api/v1/blog",
 					"GET /api/v1/blog/:slug",
+					"POST /api/v1/contact",
 				},
 				"admin": []string{
 					"POST /api/v1/admin/education",

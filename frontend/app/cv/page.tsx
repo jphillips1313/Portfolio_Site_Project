@@ -128,12 +128,21 @@ export default function CVPage() {
           >
             ← Back to Portfolio
           </Link>
-          <button
-            onClick={() => window.print()}
-            className="px-4 py-2 border border-border-visible text-text-primary hover:border-accent-red transition-colors text-sm print:hidden"
-          >
-            Print / Save as PDF
-          </button>
+          <div className="flex gap-3 print:hidden">
+            <a
+              href="/Jack_CV.pdf"
+              download="Jack_Phillips_CV.pdf"
+              className="px-4 py-2 border border-accent-red text-text-primary hover:bg-accent-red transition-colors text-sm"
+            >
+              Download CV
+            </a>
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 border border-border-visible text-text-primary hover:border-accent-red transition-colors text-sm"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
         </div>
       </header>
 

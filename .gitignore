@@ -3,3 +3,4 @@ backend/.env
 frontend/.env.local
 backend/cmd/hash_password.go
 .env
+.md

@@ -15,12 +15,11 @@ export default function AboutSection() {
           <div>
             {/* Photo floats left */}
             <div className="float-left w-64 h-64 mr-8 mb-4 bg-bg-card border border-border-visible rounded-lg overflow-hidden">
-              <div className="w-full h-full flex items-center justify-center text-text-muted">
-                <div className="text-center">
-                  <div className="text-6xl mb-2">👨‍💻</div>
-                  <p className="text-sm">Photo coming soon</p>
-                </div>
-              </div>
+              <img
+                src="/jack_graduation.jpg"
+                alt="Jack Phillips - Graduation"
+                className="w-full h-full object-cover"
+              />
             </div>
 
             {/* Text flows around photo */}

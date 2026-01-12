@@ -16,14 +16,14 @@ export default function ContactSection() {
         </div>
         <div className="flex flex-wrap justify-center gap-6 mb-16">
           <a
-            href="mailto:jackphillips1313@gmail.com"
+            href="/contact"
             className="px-8 py-3.5 bg-bg-primary border border-accent-red text-text-primary hover:bg-accent-red transition-colors no-underline font-medium"
           >
-            Send Email
+            Contact Me
           </a>
           <a
-            href="/cv.pdf"
-            download
+            href="/Jack_CV.pdf"
+            download="Jack_Phillips_CV.pdf"
             className="px-8 py-3.5 bg-transparent border border-border-visible text-text-primary hover:border-text-primary transition-colors no-underline font-medium"
           >
             Download CV

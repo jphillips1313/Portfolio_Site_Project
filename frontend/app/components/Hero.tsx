@@ -25,10 +25,10 @@ export default function Hero() {
                 View Projects
               </a>
               <a
-                href="#contact"
+                href="/contact"
                 className="px-6 md:px-8 py-3 md:py-3.5 bg-transparent border border-border-visible text-text-primary hover:border-text-primary transition-colors no-underline font-medium text-center"
               >
-                Download CV
+                Get In Touch
               </a>
             </div>
           </div>

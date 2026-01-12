@@ -11,7 +11,7 @@ export default function Navigation() {
     { href: "/blog", label: "Blog" },
     { href: "#work", label: "Work" },
     { href: "#skills", label: "Skills" },
-    { href: "#contact", label: "Contact" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const handleNavClick = () => {
