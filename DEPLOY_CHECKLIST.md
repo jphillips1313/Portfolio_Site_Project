@@ -61,6 +61,7 @@ Follow these steps in order. Total time: ~30 minutes.
 Choose one method:
 
 ### Method A: Railway CLI (Easiest)
+
 ```bash
 npm install -g @railway/cli
 railway login
@@ -71,6 +72,7 @@ railway run psql $DATABASE_URL < backend/internal/database/seed_admin_user.sql
 ```
 
 ### Method B: Railway Dashboard
+
 1. [ ] Railway → PostgreSQL service → "Data" tab
 2. [ ] Click "Query"
 3. [ ] Copy/paste and run each SQL file:
@@ -105,6 +107,7 @@ railway run psql $DATABASE_URL < backend/internal/database/seed_admin_user.sql
 ## 🎉 You're Live!
 
 Your portfolio is now live on:
+
 - **Frontend**: `https://your-app.vercel.app`
 - **Backend**: `https://your-app.up.railway.app`
 
@@ -115,10 +118,12 @@ Share your portfolio with recruiters! 🚀
 ## 📱 Custom Domain (Optional)
 
 ### Buy a domain (Free options):
+
 - Freenom (free .tk, .ml, .ga domains)
 - Get a .dev domain (~$12/year)
 
 ### Setup:
+
 1. **Vercel**: Settings → Domains → Add domain
 2. **Railway**: Settings → Networking → Add domain
 3. Update DNS records at your registrar
