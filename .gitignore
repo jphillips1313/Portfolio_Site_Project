@@ -1,6 +1,45 @@
+# System files
 .DS_Store
+*.log
+
+# Documentation (keep private)
+*.md
+
+# Environment variables
+.env
+.env.local
+.env.production
 backend/.env
 frontend/.env.local
+frontend/.env.production.local
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+backend/main
+backend/cmd/api/main
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Uploads (keep structure but ignore content)
+frontend/public/uploads/**
+!frontend/public/uploads/.gitkeep
+!frontend/public/uploads/README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
 backend/cmd/hash_password.go
-.env
-.md
+*.tmp
+*.temp
+
+# Docker
+.dockerignore.local
