@@ -24,17 +24,18 @@ func (h *ProjectsHandler) GetAllProjects(c *fiber.Ctx) error {
 
 	var projects []models.Project
 
+	// Include active projects, or archived projects that are featured
 	query := `
 	SELECT id, name, slug, short_description, full_description, status,
 	start_date, end_date, github_url, live_url, featured,
 	difficulty_level, image_url, demo_video_url, display_order,
 	view_count, created_at, updated_at
 	FROM projects
-	WHERE status = 'active'
+	WHERE (status = 'active' OR (status = 'archived' AND featured = true))
 	`
 
 	if featuredOnly == "true" {
-		query += "AND featured = true"
+		query += "AND featured = true "
 	}
 
 	query += "ORDER BY display_order ASC, created_at DESC"
@@ -99,16 +100,16 @@ func (h *ProjectsHandler) GetProjectBySlug(c *fiber.Ctx) error {
 
 	var skills []models.Skill
 	skillQuery := `
-	SELECT s.id, s.name, s.category, s.proficency_level, s.icon
+	SELECT s.id, s.name, s.category, s.proficiency_level, s.icon
 	FROM skills s
-	INNER JOIN poject_skills ps ON s.id = ps.Skill_id
+	INNER JOIN project_skills ps ON s.id = ps.skill_id
 	WHERE ps.project_id = $1
 	ORDER BY ps.is_primary DESC, s.name ASC
 	`
 
 	h.db.DB.Select(&skills, skillQuery, project.ID)
 
-	h.db.DB.Exec("UPDATE projects SET view_count + 1 WHERE id = $1", project.ID)
+	h.db.DB.Exec("UPDATE projects SET view_count = view_count + 1 WHERE id = $1", project.ID)
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -121,12 +122,43 @@ func (h *ProjectsHandler) GetProjectBySlug(c *fiber.Ctx) error {
 
 // Create a new project (Admin Only)
 func (h *ProjectsHandler) CreateProject(c *fiber.Ctx) error {
-	var project models.Project
+	var input struct {
+		Name             string   `json:"name"`
+		Slug             string   `json:"slug"`
+		ShortDescription *string  `json:"short_description"`
+		FullDescription  *string  `json:"full_description"`
+		Status           string   `json:"status"`
+		StartDate        *string  `json:"start_date"`
+		EndDate          *string  `json:"end_date"`
+		GithubURL        *string  `json:"github_url"`
+		LiveURL          *string  `json:"live_url"`
+		Featured         bool     `json:"featured"`
+		DifficultyLevel  *string  `json:"difficulty_level"`
+		ImageURL         *string  `json:"image_url"`
+		DisplayOrder     int      `json:"display_order"`
+		SkillIDs         []string `json:"skill_ids"`
+	}
 
-	if err := c.BodyParser(&project); err != nil {
+	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(models.ErrorResponse{
 			Error:   "invalid_request",
-			Message: "Invalid request",
+			Message: "Invalid request body",
+			Code:    400,
+		})
+	}
+
+	// Validate required fields
+	if input.Name == "" {
+		return c.Status(400).JSON(models.ErrorResponse{
+			Error:   "validation_error",
+			Message: "name is required",
+			Code:    400,
+		})
+	}
+	if input.Slug == "" {
+		return c.Status(400).JSON(models.ErrorResponse{
+			Error:   "validation_error",
+			Message: "slug is required",
 			Code:    400,
 		})
 	}
@@ -136,32 +168,67 @@ func (h *ProjectsHandler) CreateProject(c *fiber.Ctx) error {
 	start_date, end_date, github_url, live_url, featured,
 	difficulty_level, image_url, display_order)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	RETURNING id, created_at, updated_at
+	RETURNING id, name, slug, short_description, full_description, status,
+	start_date, end_date, github_url, live_url, featured,
+	difficulty_level, image_url, demo_video_url, display_order,
+	view_count, created_at, updated_at
 	`
 
+	var project models.Project
 	err := h.db.DB.QueryRow(
 		query,
-		project.Name,
-		project.Slug,
-		project.ShortDescription,
-		project.FullDescription,
-		project.Status,
-		project.StartDate,
-		project.EndDate,
-		project.GithubURL,
-		project.LiveURL,
-		project.Featured,
-		project.DifficultyLevel,
-		project.ImageURL,
-		project.DisplayOrder,
-	).Scan(&project.ID, project.CreatedAt, project.UpdatedAt)
+		input.Name,
+		input.Slug,
+		input.ShortDescription,
+		input.FullDescription,
+		input.Status,
+		input.StartDate,
+		input.EndDate,
+		input.GithubURL,
+		input.LiveURL,
+		input.Featured,
+		input.DifficultyLevel,
+		input.ImageURL,
+		input.DisplayOrder,
+	).Scan(
+		&project.ID,
+		&project.Name,
+		&project.Slug,
+		&project.ShortDescription,
+		&project.FullDescription,
+		&project.Status,
+		&project.StartDate,
+		&project.EndDate,
+		&project.GithubURL,
+		&project.LiveURL,
+		&project.Featured,
+		&project.DifficultyLevel,
+		&project.ImageURL,
+		&project.DemoVideoURL,
+		&project.DisplayOrder,
+		&project.ViewCount,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	)
 
 	if err != nil {
+		println("Create project error:", err.Error())
 		return c.Status(500).JSON(models.ErrorResponse{
 			Error:   "database_error",
 			Message: "Failed to create project",
 			Code:    500,
 		})
+	}
+
+	// Add skills if provided
+	if len(input.SkillIDs) > 0 {
+		for _, skillIDStr := range input.SkillIDs {
+			skillID, err := uuid.Parse(skillIDStr)
+			if err != nil {
+				continue // Skip invalid UUIDs
+			}
+			h.db.DB.Exec("INSERT INTO project_skills (project_id, skill_id, is_primary) VALUES ($1, $2, false)", project.ID, skillID)
+		}
 	}
 
 	return c.Status(201).JSON(fiber.Map{
@@ -186,6 +253,19 @@ func (h *ProjectsHandler) Update(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
+	}
+
+	// Extract skill_ids before building project update query
+	var skillIDs []string
+	if skillIDsRaw, ok := updates["skill_ids"]; ok {
+		if skillIDsArray, ok := skillIDsRaw.([]interface{}); ok {
+			for _, sid := range skillIDsArray {
+				if sidStr, ok := sid.(string); ok {
+					skillIDs = append(skillIDs, sidStr)
+				}
+			}
+		}
+		delete(updates, "skill_ids") // Remove from project updates
 	}
 
 	// Build dynamic UPDATE query
@@ -225,7 +305,25 @@ func (h *ProjectsHandler) Update(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(project)
+	// Update skills if provided
+	if len(skillIDs) > 0 {
+		// Delete existing skills
+		h.db.DB.Exec("DELETE FROM project_skills WHERE project_id = $1", projectID)
+
+		// Add new skills
+		for _, skillIDStr := range skillIDs {
+			skillID, err := uuid.Parse(skillIDStr)
+			if err != nil {
+				continue // Skip invalid UUIDs
+			}
+			h.db.DB.Exec("INSERT INTO project_skills (project_id, skill_id, is_primary) VALUES ($1, $2, false)", projectID, skillID)
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    project,
+	})
 }
 
 // Delete deletes a project record

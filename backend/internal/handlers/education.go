@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,14 +19,15 @@ func NewEducationHandler(db *database.Database) *EducationHandler {
 	return &EducationHandler{db: db}
 }
 
-// Return all education entries
+// Return all education entries with their modules
 func (h *EducationHandler) GetAllEducation(c *fiber.Ctx) error {
 	var education []models.Education
 
 	query :=
 		`SELECT id, degree, institution, field_of_study, start_date, end_date, grade, description, slug, display_order,
 	created_at, updated_at
-	FROM education`
+	FROM education
+	ORDER BY display_order ASC`
 
 	err := h.db.DB.Select(&education, query)
 	if err != nil {
@@ -34,6 +36,25 @@ func (h *EducationHandler) GetAllEducation(c *fiber.Ctx) error {
 			Message: "Failed to fetch education data",
 			Code:    500,
 		})
+	}
+
+	// Fetch modules for each education entry
+	for i := range education {
+		var modules []models.Module
+		moduleQuery := `
+		SELECT id, education_id, name, code, grade, credits, semester, description,
+		detailed_content, display_order, created_at, updated_at
+		FROM modules
+		WHERE education_id = $1
+		ORDER BY display_order ASC
+		`
+
+		err = h.db.DB.Select(&modules, moduleQuery, education[i].ID)
+		if err != nil {
+			// If no modules found or error, set empty array
+			modules = []models.Module{}
+		}
+		education[i].Modules = modules
 	}
 
 	return c.JSON(fiber.Map{
@@ -260,7 +281,22 @@ func (h *EducationHandler) UpdateModule(c *fiber.Ctx) error {
 
 	for field, value := range updates {
 		if allowedFields[field] {
-			query += fmt.Sprintf(", %s, $%d", field, argsPosition)
+			// Special handling for detailed_content (JSONB field)
+			if field == "detailed_content" && value != nil {
+				// If it's a string, try to parse it as JSON
+				// If it fails, wrap it as a simple JSON object
+				if strValue, ok := value.(string); ok {
+					// Try to parse as JSON first
+					var jsonTest interface{}
+					if json.Unmarshal([]byte(strValue), &jsonTest) != nil {
+						// Not valid JSON, wrap it in an object
+						wrappedJSON, _ := json.Marshal(map[string]string{"content": strValue})
+						value = string(wrappedJSON)
+					}
+				}
+			}
+
+			query += fmt.Sprintf(", %s = $%d", field, argsPosition)
 			args = append(args, value)
 			argsPosition++
 		}
@@ -278,11 +314,15 @@ func (h *EducationHandler) UpdateModule(c *fiber.Ctx) error {
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update module",
+			"error":   "Failed to update module",
+			"details": err.Error(),
 		})
 	}
 
-	return c.JSON(module)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    module,
+	})
 }
 
 // Deletes a module
@@ -314,4 +354,109 @@ func (h *EducationHandler) DeleteModule(c *fiber.Ctx) error {
 		"message": "Module deleted successfully",
 	})
 
+}
+
+// Creates a new module
+func (h *EducationHandler) CreateModule(c *fiber.Ctx) error {
+	var input struct {
+		EducationID     string      `json:"education_id"`
+		Name            string      `json:"name"`
+		Code            *string     `json:"code"`
+		Grade           *string     `json:"grade"`
+		Credits         *int        `json:"credits"`
+		Semester        *string     `json:"semester"`
+		Description     *string     `json:"description"`
+		DetailedContent interface{} `json:"detailed_content"`
+		DisplayOrder    int         `json:"display_order"`
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		println("Body parse error:", err.Error())
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+	}
+
+	println("Received create request:", fmt.Sprintf("%+v", input))
+
+	// Parse education_id
+	educationID, err := uuid.Parse(input.EducationID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid education_id format",
+		})
+	}
+
+	// Validate required fields
+	if input.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "name is required",
+		})
+	}
+
+	// Handle detailed_content - convert string to JSON if needed
+	var detailedContent interface{}
+	if input.DetailedContent != nil {
+		if strValue, ok := input.DetailedContent.(string); ok && strValue != "" {
+			// Try to parse as JSON first
+			var jsonTest interface{}
+			if json.Unmarshal([]byte(strValue), &jsonTest) != nil {
+				// Not valid JSON, wrap it in an object
+				wrappedJSON, _ := json.Marshal(map[string]string{"content": strValue})
+				detailedContent = string(wrappedJSON)
+			} else {
+				detailedContent = strValue
+			}
+		} else {
+			detailedContent = input.DetailedContent
+		}
+	}
+
+	query := `
+		INSERT INTO modules (education_id, name, code, grade, credits, semester, description, detailed_content, display_order)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, education_id, name, code, grade, credits, semester, description, detailed_content, display_order, created_at, updated_at
+	`
+
+	var module models.Module
+	err = h.db.DB.QueryRow(
+		query,
+		educationID,
+		input.Name,
+		input.Code,
+		input.Grade,
+		input.Credits,
+		input.Semester,
+		input.Description,
+		detailedContent,
+		input.DisplayOrder,
+	).Scan(
+		&module.ID,
+		&module.EducationID,
+		&module.Name,
+		&module.Code,
+		&module.Grade,
+		&module.Credits,
+		&module.Semester,
+		&module.Description,
+		&module.DetailedContent,
+		&module.DisplayOrder,
+		&module.CreatedAt,
+		&module.UpdatedAt,
+	)
+
+	if err != nil {
+		println("Database error:", err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Failed to create module",
+			"details": err.Error(),
+		})
+	}
+
+	println("Module created successfully:", module.ID.String())
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    module,
+	})
 }

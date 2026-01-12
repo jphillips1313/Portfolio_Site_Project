@@ -124,6 +124,80 @@ func (h *SkillsHandler) Update(c *fiber.Ctx) error {
 	return c.JSON(skill)
 }
 
+// Create creates a new skill
+func (h *SkillsHandler) Create(c *fiber.Ctx) error {
+	var input struct {
+		Name             string  `json:"name"`
+		Category         string  `json:"category"`
+		ProficiencyLevel int     `json:"proficiency_level"`
+		YearsExperience  float64 `json:"years_experience"`
+		Icon             string  `json:"icon"`
+		Description      *string `json:"description"`
+		DisplayOrder     int     `json:"display_order"`
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if input.Name == "" || input.Category == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Name and category are required",
+		})
+	}
+
+	query := `
+		INSERT INTO skills (
+			name, category, proficiency_level, years_experience,
+			icon, description, display_order, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+		RETURNING id, name, category, proficiency_level, years_experience, status,
+		          first_learned_date, last_used_date, description, icon,
+		          display_order, created_at, updated_at
+	`
+
+	var skill models.Skill
+	err := h.db.DB.QueryRow(
+		query,
+		input.Name,
+		input.Category,
+		input.ProficiencyLevel,
+		input.YearsExperience,
+		input.Icon,
+		input.Description,
+		input.DisplayOrder,
+	).Scan(
+		&skill.ID,
+		&skill.Name,
+		&skill.Category,
+		&skill.ProficiencyLevel,
+		&skill.YearsExperience,
+		&skill.Status,
+		&skill.FirstLearnedDate,
+		&skill.LastUsedDate,
+		&skill.Description,
+		&skill.Icon,
+		&skill.DisplayOrder,
+		&skill.CreatedAt,
+		&skill.UpdatedAt,
+	)
+
+	if err != nil {
+		println("Create skill error:", err.Error())
+		return c.Status(500).JSON(fiber.Map{
+			"error":   "database_error",
+			"message": "Failed to create skill",
+		})
+	}
+
+	return c.Status(201).JSON(fiber.Map{
+		"success": true,
+		"data":    skill,
+	})
+}
+
 // Deletes a skill entry
 func (h *SkillsHandler) Delete(c *fiber.Ctx) error {
 	id := c.Params("id")

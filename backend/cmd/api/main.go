@@ -108,14 +108,17 @@ func main() {
 	admin.Delete("/education/:id", educationHandler.Delete)
 
 	// Admin - Module management
+	admin.Post("/modules", educationHandler.CreateModule)
 	admin.Patch("/modules/:id", educationHandler.UpdateModule)
 	admin.Delete("/modules/:id", educationHandler.DeleteModule)
 
 	// Admin - Skills management
+	admin.Post("/skills", skillsHandler.Create)
 	admin.Patch("/skills/:id", skillsHandler.Update)
 	admin.Delete("/skills/:id", skillsHandler.Delete)
 
 	// Admin - Projects management
+	admin.Post("/projects", projectsHandler.CreateProject)
 	admin.Patch("/projects/:id", projectsHandler.Update)
 	admin.Delete("/projects/:id", projectsHandler.Delete)
 
@@ -146,12 +149,15 @@ func main() {
 				"admin": []string{
 					"PATCH /api/v1/admin/education/:id",
 					"DELETE /api/v1/admin/education/:id",
+					"POST /api/v1/admin/modules",
 					"PATCH /api/v1/admin/modules/:id",
 					"DELETE /api/v1/admin/modules/:id",
+					"POST /api/v1/admin/skills",
 					"PATCH /api/v1/admin/skills/:id",
 					"DELETE /api/v1/admin/skills/:id",
 					"PATCH /api/v1/admin/projects/:id",
 					"DELETE /api/v1/admin/projects/:id",
+					"POST /api/v1/admin/projects",
 					"POST /api/v1/admin/blog",
 					"PATCH /api/v1/admin/blog/:id",
 					"DELETE /api/v1/admin/blog/:id",

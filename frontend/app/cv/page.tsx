@@ -12,17 +12,18 @@ interface Education {
   grade: string;
   description: string;
   slug: string;
+  modules?: Module[];
 }
 
 interface Module {
   id: string;
   name: string;
-  code: string;
-  credits: number;
-  grade: string;
-  academic_year: string;
-  year_of_study: number;
-  detailed_content: any; // JSONB field for future detailed info
+  code: string | null;
+  credits: number | null;
+  grade: string | null;
+  semester: string | null;
+  description: string | null;
+  detailed_content: any;
 }
 
 interface Skill {
@@ -40,12 +41,11 @@ interface Project {
   status: string;
   github_url: string | null;
   live_url: string | null;
-  skills: Skill[];
+  skills: Skill[] | null;
 }
 
 export default function CVPage() {
   const [education, setEducation] = useState<Education[]>([]);
-  const [allModules, setAllModules] = useState<Record<string, Module[]>>({});
   const [skills, setSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [expandedDegree, setExpandedDegree] = useState<string | null>(null);
@@ -61,14 +61,16 @@ export default function CVPage() {
       fetch(`${apiUrl}/api/v1/projects`).then((r) => r.json()),
     ])
       .then(([eduData, skillsData, projectsData]) => {
-        setEducation(eduData.data);
-        setSkills(skillsData.data);
+        setEducation(Array.isArray(eduData?.data) ? eduData.data : []);
+        setSkills(Array.isArray(skillsData?.data) ? skillsData.data : []);
 
-        // Transform projects data
-        const transformedProjects = projectsData.data.map((item: any) => ({
-          ...item.project,
-          skills: item.skills,
-        }));
+        // Transform projects data with proper null checks
+        const transformedProjects = Array.isArray(projectsData?.data)
+          ? projectsData.data.map((item: any) => ({
+              ...(item?.project || {}),
+              skills: Array.isArray(item?.skills) ? item.skills : [],
+            }))
+          : [];
         setProjects(transformedProjects);
 
         setLoading(false);
@@ -79,23 +81,11 @@ export default function CVPage() {
       });
   }, [apiUrl]);
 
-  const handleDegreeToggle = (id: string, slug: string) => {
+  const handleDegreeToggle = (id: string) => {
     if (expandedDegree === id) {
       setExpandedDegree(null);
     } else {
       setExpandedDegree(id);
-
-      // Fetch modules if not already loaded
-      if (!allModules[id]) {
-        fetch(`${apiUrl}/api/v1/education/${slug}`)
-          .then((r) => r.json())
-          .then((data) => {
-            setAllModules((prev) => ({
-              ...prev,
-              [id]: data.data.modules || [],
-            }));
-          });
-      }
     }
   };
 
@@ -189,7 +179,7 @@ export default function CVPage() {
               >
                 {/* Degree Header - Clickable */}
                 <div
-                  onClick={() => handleDegreeToggle(edu.id, edu.slug)}
+                  onClick={() => handleDegreeToggle(edu.id)}
                   className="p-6 cursor-pointer hover:bg-bg-secondary/30 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -230,9 +220,9 @@ export default function CVPage() {
                     <h4 className="font-semibold text-text-primary mt-4 mb-3">
                       Modules:
                     </h4>
-                    {allModules[edu.id] ? (
+                    {edu.modules && edu.modules.length > 0 ? (
                       <div className="space-y-3">
-                        {allModules[edu.id].map((module) => (
+                        {edu.modules.map((module) => (
                           <div
                             key={module.id}
                             className="bg-bg-secondary/30 border border-border-subtle rounded p-4"
@@ -242,22 +232,36 @@ export default function CVPage() {
                                 <h5 className="font-medium text-text-primary">
                                   {module.name}
                                 </h5>
-                                <p className="text-text-muted text-xs">
-                                  {module.code}
-                                </p>
+                                {module.code && (
+                                  <p className="text-text-muted text-xs">
+                                    {module.code}
+                                  </p>
+                                )}
                               </div>
                               <div className="text-right text-sm">
-                                <p className="text-text-secondary">
-                                  Grade: {module.grade}
-                                </p>
-                                <p className="text-text-muted">
-                                  {module.credits} credits
-                                </p>
+                                {module.grade && (
+                                  <p className="text-text-secondary">
+                                    Grade: {module.grade}
+                                  </p>
+                                )}
+                                {module.credits && (
+                                  <p className="text-text-muted">
+                                    {module.credits} credits
+                                  </p>
+                                )}
                               </div>
                             </div>
 
-                            {/* Detailed content - will show when you add it to DB */}
+                            {/* Description */}
+                            {module.description && (
+                              <p className="text-text-secondary text-sm mt-2">
+                                {module.description}
+                              </p>
+                            )}
+
+                            {/* Detailed content */}
                             {module.detailed_content &&
+                              typeof module.detailed_content === "object" &&
                               Object.keys(module.detailed_content).length >
                                 0 && (
                                 <div className="mt-3 pt-3 border-t border-border-subtle">
@@ -302,26 +306,24 @@ export default function CVPage() {
                                         </span>
                                       </div>
                                     )}
-                                    {module.detailed_content.description && (
-                                      <p>
-                                        {module.detailed_content.description}
-                                      </p>
+                                    {module.detailed_content.content && (
+                                      <p>{module.detailed_content.content}</p>
                                     )}
                                   </div>
                                 </div>
                               )}
 
-                            <div className="mt-2 flex gap-3 text-xs text-text-muted">
-                              <span>Year {module.year_of_study}</span>
-                              <span>•</span>
-                              <span>{module.academic_year}</span>
-                            </div>
+                            {module.semester && (
+                              <div className="mt-2 text-xs text-text-muted">
+                                Semester {module.semester}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-text-muted text-sm">
-                        Loading modules...
+                        No modules available
                       </p>
                     )}
                   </div>
@@ -370,68 +372,72 @@ export default function CVPage() {
           </h2>
 
           <div className="space-y-6">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="border border-border-visible rounded p-6"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-semibold text-text-primary">
-                    {project.name}
-                  </h3>
-                  <span className="px-2 py-1 border border-border-visible text-text-muted text-xs uppercase">
-                    {project.status}
-                  </span>
-                </div>
+            {projects && projects.length > 0 ? (
+              projects.map((project) => (
+                <div
+                  key={project.id}
+                  className="border border-border-visible rounded p-6"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-xl font-semibold text-text-primary">
+                      {project.name}
+                    </h3>
+                    <span className="px-2 py-1 border border-border-visible text-text-muted text-xs uppercase">
+                      {project.status}
+                    </span>
+                  </div>
 
-                <p className="text-text-secondary mb-4 leading-relaxed">
-                  {project.full_description || project.short_description}
-                </p>
-
-                {/* Tech Stack */}
-                <div className="mb-4">
-                  <p className="text-text-muted text-xs uppercase mb-2">
-                    Technologies:
+                  <p className="text-text-secondary mb-4 leading-relaxed">
+                    {project.full_description || project.short_description}
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.skills.map((skill) => (
-                      <span
-                        key={skill.id}
-                        className="px-2 py-1 bg-bg-secondary border border-border-subtle text-text-secondary text-xs"
-                      >
-                        {skill.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Links */}
-                {(project.github_url || project.live_url) && (
-                  <div className="flex gap-4 text-sm">
-                    {project.github_url && (
-                      <a
-                        href={project.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent-red hover:underline"
-                      >
-                        GitHub →
-                      </a>
-                    )}
-                    {project.live_url && (
-                      <a
-                        href={project.live_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent-red hover:underline"
-                      >
-                        Live Demo →
-                      </a>
-                    )}
+                  {/* Tech Stack */}
+                  <div className="mb-4">
+                    <p className="text-text-muted text-xs uppercase mb-2">
+                      Technologies:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(project.skills || []).map((skill) => (
+                        <span
+                          key={skill.id}
+                          className="px-2 py-1 bg-bg-secondary border border-border-subtle text-text-secondary text-xs"
+                        >
+                          {skill.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Links */}
+                  {(project.github_url || project.live_url) && (
+                    <div className="flex gap-4 text-sm">
+                      {project.github_url && (
+                        <a
+                          href={project.github_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent-red hover:underline"
+                        >
+                          GitHub →
+                        </a>
+                      )}
+                      {project.live_url && (
+                        <a
+                          href={project.live_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent-red hover:underline"
+                        >
+                          Live Demo →
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-text-muted">No projects available</p>
+            )}
           </div>
         </section>
 

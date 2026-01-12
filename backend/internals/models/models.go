@@ -78,6 +78,7 @@ type Education struct {
 	DisplayOrder int        `db:"display_order" json:"display_order"`
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
+	Modules      []Module   `db:"-" json:"modules,omitempty"` // Not a DB column, populated manually
 }
 
 // Module represents a course within a degree
