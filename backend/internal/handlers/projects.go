@@ -355,3 +355,93 @@ func (h *ProjectsHandler) Delete(c *fiber.Ctx) error {
 		"message": "Project deleted successfully",
 	})
 }
+
+// UploadImage handles image upload for a project
+func (h *ProjectsHandler) UploadImage(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	projectID, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid project ID format",
+		})
+	}
+
+	// Check if project exists
+	var exists bool
+	err = h.db.DB.Get(&exists, "SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1)", projectID)
+	if err != nil || !exists {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Project not found",
+		})
+	}
+
+	// Get the file from the form
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No file uploaded",
+		})
+	}
+
+	// Validate file size (max 5MB)
+	if file.Size > 5*1024*1024 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "File size too large (max 5MB)",
+		})
+	}
+
+	// Validate file type
+	contentType := file.Header.Get("Content-Type")
+	validTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		"image/png":  true,
+		"image/gif":  true,
+		"image/webp": true,
+	}
+
+	if !validTypes[contentType] {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid file type (only images allowed)",
+		})
+	}
+
+	// Generate unique filename
+	ext := ""
+	switch contentType {
+	case "image/jpeg", "image/jpg":
+		ext = ".jpg"
+	case "image/png":
+		ext = ".png"
+	case "image/gif":
+		ext = ".gif"
+	case "image/webp":
+		ext = ".webp"
+	}
+
+	filename := fmt.Sprintf("%s%s", uuid.New().String(), ext)
+	uploadPath := fmt.Sprintf("/app/uploads/projects/%s", filename)
+
+	// Save the file
+	if err := c.SaveFile(file, uploadPath); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to save file",
+		})
+	}
+
+	// Update project's image_url in database
+	publicURL := fmt.Sprintf("/uploads/projects/%s", filename)
+	_, err = h.db.DB.Exec("UPDATE projects SET image_url = $1 WHERE id = $2", publicURL, projectID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update project",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"image_url": publicURL,
+		"message":   "Image uploaded successfully",
+	})
+}

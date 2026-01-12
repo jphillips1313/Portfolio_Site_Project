@@ -30,15 +30,22 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.Username == "" || req.Password == "" {
+	if req.Email == "" || req.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Username and Password are required",
+			"error": "Email and Password are required",
 		})
 	}
 
-	//Find user by username
+	// Basic email validation
+	if !isValidEmail(req.Email) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid email format",
+		})
+	}
+
+	//Find user by email
 	var user models.User
-	err := h.db.Get(&user, "SELECT * FROM users WHERE username = $1", req.Username)
+	err := h.db.Get(&user, "SELECT * FROM users WHERE email = $1", req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -165,4 +172,81 @@ func getJWTSecret() string {
 		return "your-super-secret-jwt-key-change-this-in-production"
 	}
 	return secret
+}
+
+// isValidEmail checks if email format is valid
+func isValidEmail(email string) bool {
+	// Simple email validation
+	if len(email) < 3 || len(email) > 254 {
+		return false
+	}
+	// Check for @ symbol
+	atIndex := -1
+	for i, char := range email {
+		if char == '@' {
+			if atIndex != -1 {
+				return false // Multiple @ symbols
+			}
+			atIndex = i
+		}
+	}
+	if atIndex == -1 || atIndex == 0 || atIndex == len(email)-1 {
+		return false
+	}
+	// Check for dot after @
+	dotAfterAt := false
+	for i := atIndex + 1; i < len(email); i++ {
+		if email[i] == '.' {
+			dotAfterAt = true
+			break
+		}
+	}
+	return dotAfterAt
+}
+
+// ValidatePassword checks if password meets security requirements
+func ValidatePassword(password string) error {
+	if len(password) < 12 {
+		return fiber.NewError(fiber.StatusBadRequest, "Password must be at least 12 characters long")
+	}
+
+	var (
+		hasUpper   = false
+		hasLower   = false
+		hasNumber  = false
+		hasSpecial = false
+	)
+
+	for _, char := range password {
+		switch {
+		case 'A' <= char && char <= 'Z':
+			hasUpper = true
+		case 'a' <= char && char <= 'z':
+			hasLower = true
+		case '0' <= char && char <= '9':
+			hasNumber = true
+		case char == '!' || char == '@' || char == '#' || char == '$' || char == '%' ||
+			char == '^' || char == '&' || char == '*' || char == '(' || char == ')' ||
+			char == '-' || char == '_' || char == '+' || char == '=' || char == '[' ||
+			char == ']' || char == '{' || char == '}' || char == '|' || char == ';' ||
+			char == ':' || char == ',' || char == '.' || char == '<' || char == '>' ||
+			char == '?' || char == '/':
+			hasSpecial = true
+		}
+	}
+
+	if !hasUpper {
+		return fiber.NewError(fiber.StatusBadRequest, "Password must contain at least one uppercase letter")
+	}
+	if !hasLower {
+		return fiber.NewError(fiber.StatusBadRequest, "Password must contain at least one lowercase letter")
+	}
+	if !hasNumber {
+		return fiber.NewError(fiber.StatusBadRequest, "Password must contain at least one number")
+	}
+	if !hasSpecial {
+		return fiber.NewError(fiber.StatusBadRequest, "Password must contain at least one special character")
+	}
+
+	return nil
 }

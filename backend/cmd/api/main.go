@@ -13,6 +13,7 @@ import (
 
 	"github.com/jphillips1313/portfolio-backend/internal/database"
 	"github.com/jphillips1313/portfolio-backend/internal/handlers"
+	"github.com/jphillips1313/portfolio-backend/internal/middleware"
 	"github.com/jphillips1313/portfolio-backend/internals/models"
 )
 
@@ -88,7 +89,13 @@ func main() {
 
 	// Public routes - Authentication
 	auth := api.Group("/auth")
-	auth.Post("/login", authHandler.Login)
+	// Apply rate limiting to login: max 5 attempts per 15 minutes
+	loginRateLimit := middleware.RateLimit(middleware.RateLimitConfig{
+		MaxRequests: 5,
+		Window:      15 * time.Minute,
+		BlockTime:   15 * time.Minute,
+	})
+	auth.Post("/login", loginRateLimit, authHandler.Login)
 	auth.Post("/logout", authHandler.Logout)
 
 	// Public routes - Read-only data
@@ -122,8 +129,10 @@ func main() {
 	admin.Post("/projects", projectsHandler.CreateProject)
 	admin.Patch("/projects/:id", projectsHandler.Update)
 	admin.Delete("/projects/:id", projectsHandler.Delete)
+	admin.Post("/projects/:id/upload-image", projectsHandler.UploadImage)
 
 	// Admin - Blog management
+	admin.Get("/blog", blogHandler.GetAllBlogPostsAdmin)
 	admin.Post("/blog", blogHandler.CreateBlogPost)
 	admin.Patch("/blog/:id", blogHandler.UpdateBlogPost)
 	admin.Delete("/blog/:id", blogHandler.DeleteBlogPost)
@@ -157,9 +166,10 @@ func main() {
 					"POST /api/v1/admin/skills",
 					"PATCH /api/v1/admin/skills/:id",
 					"DELETE /api/v1/admin/skills/:id",
+					"POST /api/v1/admin/projects",
 					"PATCH /api/v1/admin/projects/:id",
 					"DELETE /api/v1/admin/projects/:id",
-					"POST /api/v1/admin/projects",
+					"POST /api/v1/admin/projects/:id/upload-image",
 					"POST /api/v1/admin/blog",
 					"PATCH /api/v1/admin/blog/:id",
 					"DELETE /api/v1/admin/blog/:id",

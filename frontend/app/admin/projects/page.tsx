@@ -42,6 +42,8 @@ export default function ProjectsEditor() {
   const [newProjectForm, setNewProjectForm] = useState<Partial<Project>>({});
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -289,6 +291,72 @@ export default function ProjectsEditor() {
       console.error(err);
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const uploadImage = async (projectId: string, file: File) => {
+    if (!token) {
+      setError("Not authenticated");
+      return;
+    }
+
+    setUploadingImage(projectId);
+    setError(null);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch(
+        `${apiUrl}/api/v1/admin/projects/${projectId}/upload-image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to upload image");
+      }
+
+      const data = await response.json();
+
+      // Update the project in local state with new image_url
+      setProjects((prev) =>
+        prev.map((item) =>
+          item.project.id === projectId
+            ? {
+                ...item,
+                project: { ...item.project, image_url: data.image_url },
+              }
+            : item
+        )
+      );
+
+      setSuccessMessage("Image uploaded successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setSelectedImage(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+      console.error(err);
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  const handleImageSelect = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    projectId: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      uploadImage(projectId, file);
     }
   };
 
@@ -686,6 +754,63 @@ export default function ProjectsEditor() {
                           {skills.map((skill) => skill.name).join(", ")}
                         </div>
                       )}
+
+                      {/* Image Upload */}
+                      <div className="border-t border-gray-800 pt-3 mt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400 text-sm">
+                            Project Image:
+                          </span>
+                          {project.image_url ? (
+                            <div className="flex items-center gap-3">
+                              <a
+                                href={project.image_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline text-sm"
+                              >
+                                View Image →
+                              </a>
+                              <label className="px-3 py-1 bg-green-900/30 hover:bg-green-900/50 text-green-300 rounded cursor-pointer text-xs">
+                                {uploadingImage === project.id
+                                  ? "Uploading..."
+                                  : "Change Image"}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) =>
+                                    handleImageSelect(e, project.id)
+                                  }
+                                  disabled={uploadingImage === project.id}
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className="px-3 py-1 bg-green-900/30 hover:bg-green-900/50 text-green-300 rounded cursor-pointer text-xs">
+                              {uploadingImage === project.id
+                                ? "Uploading..."
+                                : "Upload Image"}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) =>
+                                  handleImageSelect(e, project.id)
+                                }
+                                disabled={uploadingImage === project.id}
+                              />
+                            </label>
+                          )}
+                        </div>
+                        {project.image_url && (
+                          <img
+                            src={project.image_url}
+                            alt={project.name}
+                            className="mt-2 rounded-lg max-w-xs max-h-48 object-cover border border-gray-800"
+                          />
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4">

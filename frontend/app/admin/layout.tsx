@@ -105,6 +105,12 @@ export default function AdminLayout({
                 >
                   Projects
                 </Link>
+                <Link
+                  href="/admin/blog"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Blog
+                </Link>
               </div>
             </div>
 

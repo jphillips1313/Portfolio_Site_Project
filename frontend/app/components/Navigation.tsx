@@ -8,6 +8,7 @@ export default function Navigation() {
 
   const navLinks = [
     { href: "/cv", label: "CV" },
+    { href: "/blog", label: "Blog" },
     { href: "#work", label: "Work" },
     { href: "#skills", label: "Skills" },
     { href: "#contact", label: "Contact" },
@@ -31,18 +32,28 @@ export default function Navigation() {
             </Link>
 
             {/* Desktop Navigation */}
-            <ul className="hidden md:flex gap-8 list-none m-0 p-0">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className="inline-block text-text-primary text-base font-medium no-underline hover:text-accent-red transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent-red after:transition-all hover:after:w-full"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <div className="hidden md:flex items-center gap-8">
+              <ul className="flex gap-8 list-none m-0 p-0">
+                {navLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      className="inline-block text-text-primary text-base font-medium no-underline hover:text-accent-red transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent-red after:transition-all hover:after:w-full"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Admin Link */}
+              <Link
+                href="/admin"
+                className="text-text-muted hover:text-accent-red text-sm font-medium transition-colors px-3 py-1 border border-border-subtle rounded hover:border-accent-red"
+              >
+                Admin
+              </Link>
+            </div>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -122,6 +133,17 @@ export default function Navigation() {
               </a>
             </li>
           ))}
+
+          {/* Admin Link */}
+          <li>
+            <Link
+              href="/admin"
+              onClick={handleNavClick}
+              className="block py-4 text-text-muted text-lg font-medium hover:text-accent-red hover:translate-x-2 transition-all"
+            >
+              Admin →
+            </Link>
+          </li>
         </ul>
 
         {/* Optional: Add social links or other content */}

@@ -8,6 +8,7 @@ interface Stats {
   projects: number;
   modules: number;
   education: number;
+  blog: number;
 }
 
 export default function AdminDashboard() {
@@ -21,17 +22,21 @@ export default function AdminDashboard() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
         // Fetch counts from public endpoints
-        const [skillsRes, projectsRes, educationRes] = await Promise.all([
-          fetch(`${apiUrl}/api/v1/skills`),
-          fetch(`${apiUrl}/api/v1/projects`),
-          fetch(`${apiUrl}/api/v1/education`),
-        ]);
+        const [skillsRes, projectsRes, educationRes, blogRes] =
+          await Promise.all([
+            fetch(`${apiUrl}/api/v1/skills`),
+            fetch(`${apiUrl}/api/v1/projects`),
+            fetch(`${apiUrl}/api/v1/education`),
+            fetch(`${apiUrl}/api/v1/blog`),
+          ]);
 
-        const [skillsData, projectsData, educationData] = await Promise.all([
-          skillsRes.json(),
-          projectsRes.json(),
-          educationRes.json(),
-        ]);
+        const [skillsData, projectsData, educationData, blogData] =
+          await Promise.all([
+            skillsRes.json(),
+            projectsRes.json(),
+            educationRes.json(),
+            blogRes.json(),
+          ]);
 
         // Count modules from education data
         let moduleCount = 0;
@@ -48,6 +53,7 @@ export default function AdminDashboard() {
           projects: projectsData.data?.length || 0,
           modules: moduleCount,
           education: educationData.data?.length || 0,
+          blog: blogData.data?.length || 0,
         });
       } catch (error) {
         console.error("Failed to fetch stats:", error);
@@ -70,7 +76,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Education Card */}
         <div className="bg-[#1a0a0f] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
           <div className="flex items-center justify-between mb-4">
@@ -184,6 +190,42 @@ export default function AdminDashboard() {
             className="text-red-300 hover:text-red-200 text-sm font-medium transition"
           >
             Manage Projects →
+          </Link>
+        </div>
+
+        {/* Blog Posts Card */}
+        <div className="bg-[#1a0a0f] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Blog Posts</h3>
+            <svg
+              className="w-8 h-8 text-yellow-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </div>
+          {loading ? (
+            <div className="text-3xl font-bold text-white animate-pulse">
+              ...
+            </div>
+          ) : (
+            <div className="text-3xl font-bold text-white mb-2">
+              {stats?.blog}
+            </div>
+          )}
+          <p className="text-gray-400 text-sm mb-4">Published blog posts</p>
+          <Link
+            href="/admin/blog"
+            className="text-yellow-300 hover:text-yellow-200 text-sm font-medium transition"
+          >
+            Manage Blog →
           </Link>
         </div>
 
@@ -314,6 +356,26 @@ export default function AdminDashboard() {
               />
             </svg>
             <span className="text-white font-medium">Manage Projects</span>
+          </Link>
+
+          <Link
+            href="/admin/blog"
+            className="flex items-center space-x-3 p-4 bg-black/30 hover:bg-black/50 rounded-lg border border-gray-800 hover:border-gray-700 transition group"
+          >
+            <svg
+              className="w-6 h-6 text-yellow-300 group-hover:text-yellow-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            <span className="text-white font-medium">Manage Blog</span>
           </Link>
 
           <Link

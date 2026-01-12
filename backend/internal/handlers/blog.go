@@ -43,6 +43,11 @@ func (h *BlogHandler) GetAllBlogPosts(c *fiber.Ctx) error {
 		})
 	}
 
+	// Ensure we return empty array instead of null
+	if posts == nil {
+		posts = []models.BlogPost{}
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
 		"data":    posts,
@@ -81,6 +86,39 @@ func (h *BlogHandler) GetBlogPostBySlug(c *fiber.Ctx) error {
 	})
 }
 
+// GetAllBlogPostsAdmin returns ALL blog posts for admin (including drafts and unpublished)
+func (h *BlogHandler) GetAllBlogPostsAdmin(c *fiber.Ctx) error {
+	var posts []models.BlogPost
+
+	query := `
+	SELECT id, title, slug, excerpt, content, status, published_at,
+	reading_time_minutes, view_count, featured, series, series_order,
+	cover_image_url, created_at, updated_at
+	FROM blog_posts
+	ORDER BY created_at DESC
+	`
+
+	err := h.db.DB.Select(&posts, query)
+	if err != nil {
+		return c.Status(500).JSON(models.ErrorResponse{
+			Error:   "database_error",
+			Message: "failed to fetch database",
+			Code:    500,
+		})
+	}
+
+	// Ensure we return empty array instead of null
+	if posts == nil {
+		posts = []models.BlogPost{}
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    posts,
+		"count":   len(posts),
+	})
+}
+
 // Add these methods to your existing BlogHandler
 
 // CreateBlogPost creates a new blog post
@@ -104,6 +142,12 @@ func (h *BlogHandler) CreateBlogPost(c *fiber.Ctx) error {
 		post.Slug = generateSlug(post.Title)
 	}
 
+	// Auto-set published_at if status is published and no date is set
+	if post.Status == "published" && post.PublishedAt == nil {
+		now := time.Now()
+		post.PublishedAt = &now
+	}
+
 	query := `
 		INSERT INTO blog_posts (title, slug, excerpt, content, status, published_at,
 			reading_time_minutes, featured, series, series_order, cover_image_url)
@@ -123,7 +167,10 @@ func (h *BlogHandler) CreateBlogPost(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(post)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"data":    post,
+	})
 }
 
 // UpdateBlogPost updates a blog post
@@ -180,7 +227,10 @@ func (h *BlogHandler) UpdateBlogPost(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(post)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    post,
+	})
 }
 
 // DeleteBlogPost deletes a blog post

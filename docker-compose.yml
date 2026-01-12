@@ -90,6 +90,8 @@ services:
       # - ./backend:/app
       # Mount migrations
       - ./backend/internal/database/migrations:/app/internal/database/migrations
+      # Mount uploads directory for image storage
+      - ./frontend/public/uploads:/app/uploads
 
     # Network
     networks:
@@ -125,6 +127,11 @@ services:
     # Port mapping
     ports:
       - "3000:3000"
+
+    # Volume mounts
+    volumes:
+      # Mount uploads directory so frontend can serve uploaded images
+      - ./frontend/public/uploads:/app/public/uploads
 
     # Network
     networks:

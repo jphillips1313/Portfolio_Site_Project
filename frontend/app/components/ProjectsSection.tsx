@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface Skill {
@@ -146,9 +147,10 @@ export default function ProjectsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <div
+            <Link
               key={project.id}
-              className="bg-bg-card border border-border-visible p-6 hover:border-accent-red transition-colors group cursor-pointer"
+              href={`/projects/${project.slug}`}
+              className="bg-bg-card border border-border-visible p-6 hover:border-accent-red transition-colors group cursor-pointer block"
             >
               <div className="inline-block px-3 py-1 text-xs border border-border-visible text-text-secondary mb-4 uppercase tracking-wide">
                 {project.status}
@@ -198,7 +200,7 @@ export default function ProjectsSection() {
                   </a>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
