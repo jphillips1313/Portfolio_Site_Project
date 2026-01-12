@@ -82,6 +82,12 @@ export default function AdminLayout({
                   Dashboard
                 </Link>
                 <Link
+                  href="/admin/education"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Education
+                </Link>
+                <Link
                   href="/admin/modules"
                   className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition"
                 >

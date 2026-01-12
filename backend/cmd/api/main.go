@@ -104,6 +104,7 @@ func main() {
 	admin := api.Group("/admin", handlers.VerifyToken)
 
 	// Admin - Education management
+	admin.Post("/education", educationHandler.CreateEducation)
 	admin.Patch("/education/:id", educationHandler.Update)
 	admin.Delete("/education/:id", educationHandler.Delete)
 
@@ -147,6 +148,7 @@ func main() {
 					"GET /api/v1/blog/:slug",
 				},
 				"admin": []string{
+					"POST /api/v1/admin/education",
 					"PATCH /api/v1/admin/education/:id",
 					"DELETE /api/v1/admin/education/:id",
 					"POST /api/v1/admin/modules",

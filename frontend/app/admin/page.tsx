@@ -7,6 +7,7 @@ interface Stats {
   skills: number;
   projects: number;
   modules: number;
+  education: number;
 }
 
 export default function AdminDashboard() {
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
           skills: skillsData.data?.length || 0,
           projects: projectsData.data?.length || 0,
           modules: moduleCount,
+          education: educationData.data?.length || 0,
         });
       } catch (error) {
         console.error("Failed to fetch stats:", error);
@@ -68,7 +70,49 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Education Card */}
+        <div className="bg-[#1a0a0f] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Education</h3>
+            <svg
+              className="w-8 h-8 text-purple-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 14l9-5-9-5-9 5 9 5z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+              />
+            </svg>
+          </div>
+          {loading ? (
+            <div className="text-3xl font-bold text-white animate-pulse">
+              ...
+            </div>
+          ) : (
+            <div className="text-3xl font-bold text-white mb-2">
+              {stats?.education || 0}
+            </div>
+          )}
+          <p className="text-gray-400 text-sm mb-4">Degrees listed</p>
+          <Link
+            href="/admin/education"
+            className="text-purple-400 hover:text-purple-300 text-sm font-medium transition"
+          >
+            Manage Education →
+          </Link>
+        </div>
+
         {/* Skills Card */}
         <div className="bg-[#1a0a0f] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
           <div className="flex items-center justify-between mb-4">
@@ -186,6 +230,32 @@ export default function AdminDashboard() {
       <div className="bg-[#1a0a0f] rounded-lg p-8 border border-gray-800">
         <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link
+            href="/admin/education"
+            className="flex items-center space-x-3 p-4 bg-black/30 hover:bg-black/50 rounded-lg border border-gray-800 hover:border-gray-700 transition group"
+          >
+            <svg
+              className="w-6 h-6 text-purple-400 group-hover:text-purple-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 14l9-5-9-5-9 5 9 5z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+              />
+            </svg>
+            <span className="text-white font-medium">Manage Education</span>
+          </Link>
+
           <Link
             href="/admin/modules"
             className="flex items-center space-x-3 p-4 bg-black/30 hover:bg-black/50 rounded-lg border border-gray-800 hover:border-gray-700 transition group"
