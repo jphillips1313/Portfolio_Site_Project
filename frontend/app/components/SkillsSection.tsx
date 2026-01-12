@@ -25,7 +25,7 @@ export default function SkillsSection() {
     fetch(`${apiUrl}/api/v1/skills`)
       .then((res) => res.json())
       .then((data) => {
-        setSkills(data.data);
+        setSkills(data.data || []);
         setError(null);
         setLoading(false);
       })
@@ -43,7 +43,7 @@ export default function SkillsSection() {
     fetch(`${apiUrl}/api/v1/skills`)
       .then((res) => res.json())
       .then((data) => {
-        setSkills(data.data);
+        setSkills(data.data || []);
         setError(null);
         setLoading(false);
       })

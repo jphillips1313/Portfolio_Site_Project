@@ -42,7 +42,7 @@ export default function EducationSection() {
     fetch(`${apiUrl}/api/v1/education`)
       .then((res) => res.json())
       .then((data) => {
-        setEducationData(data.data);
+        setEducationData(data.data || []);
         setError(null);
         setLoading(false);
       })
@@ -59,7 +59,7 @@ export default function EducationSection() {
     fetch(`${apiUrl}/api/v1/education`)
       .then((res) => res.json())
       .then((data) => {
-        setEducationData(data.data);
+        setEducationData(data.data || []);
         setError(null);
         setLoading(false);
       })
