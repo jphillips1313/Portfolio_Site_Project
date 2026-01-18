@@ -38,7 +38,7 @@ export default function Hero() {
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-6 md:gap-8">
               <div>
                 <div className="text-4xl md:text-5xl font-heading font-semibold mb-1">
-                  23
+                  21
                 </div>
                 <div className="text-text-secondary text-xs md:text-sm uppercase tracking-wide">
                   Technologies
@@ -46,7 +46,7 @@ export default function Hero() {
               </div>
               <div>
                 <div className="text-4xl md:text-5xl font-heading font-semibold mb-1">
-                  5
+                  2
                 </div>
                 <div className="text-text-secondary text-xs md:text-sm uppercase tracking-wide">
                   Active Projects
@@ -62,7 +62,7 @@ export default function Hero() {
               </div>
               <div>
                 <div className="text-4xl md:text-5xl font-heading font-semibold mb-1">
-                  4
+                  2
                 </div>
                 <div className="text-text-secondary text-xs md:text-sm uppercase tracking-wide">
                   Years Experience
